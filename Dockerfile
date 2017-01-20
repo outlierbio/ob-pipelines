@@ -6,6 +6,7 @@ RUN yum install -y \
 	bzip2 \
 	gcc \
 	gcc-c++ \
+	git \
 	make \
 	python-devel \
 	tar \

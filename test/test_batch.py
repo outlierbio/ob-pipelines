@@ -28,7 +28,7 @@ TEST_JOB_DEF = {
         'message': 'hll wrld'
     },
     'containerProperties': {
-        'image': 'outlierbio/ob-pipelines',
+        'image': 'centos',
         'command': ['/bin/echo', 'Ref::message'],
         'vcpus': 2,
         'memory': 4,
