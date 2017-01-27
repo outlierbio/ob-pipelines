@@ -1,4 +1,5 @@
 import os
+import os.path as op
 from subprocess import check_output
 import boto3
 import pytest
@@ -8,6 +9,7 @@ from ob_pipelines.s3 import s3args
 TEST_BUCKET = os.environ.get('TEST_BUCKET')
 OUT_KEY = 'test_out'
 IN_KEY = 'test_in'
+IN_PREFIX = 'test_prefix/'
 s3 = boto3.client('s3')
 
 
@@ -21,6 +23,13 @@ def s3_outpath():
 def s3_inpath():
     s3.put_object(Body=b'testing', Bucket=TEST_BUCKET, Key=IN_KEY)
     return 's3://{}/{}'.format(TEST_BUCKET, IN_KEY)
+
+
+@pytest.fixture
+def s3_infolder():
+    for i in range(3):
+        s3.put_object(Body=b'testing', Bucket=TEST_BUCKET, Key=IN_PREFIX + str(i))
+    return 's3://{}/{}'.format(TEST_BUCKET, IN_PREFIX)
 
 
 def test_local_fn_run_unaltered():
@@ -57,3 +66,18 @@ def test_download_s3(s3_inpath):
 
     out = cat_message('just', s3_inpath)
     assert out == b'just testing\n'
+
+
+@pytest.mark.skipif(TEST_BUCKET is None, reason='Need an accessible S3 bucket')
+def test_download_folder(s3_infolder):
+
+    @s3args
+    def cat_message(msg, folder):
+        files = os.listdir(folder)
+        for fpath in files:
+            with open(op.join(folder, fpath)) as f:
+                msg += ' ' + f.read().strip()
+        return check_output(['echo', msg])
+
+    out = cat_message('just', s3_infolder)
+    assert out == b'just testing testing testing\n'

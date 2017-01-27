@@ -28,13 +28,21 @@ RUN conda install -y \
 	click \
 	ipython
 
+# Required for Click on Python3
+ENV LC_ALL en_US.utf-8
+ENV LANG en_US.utf-8
+
 # pip packages
 RUN pip install \
 	awscli \
 	luigi
 
-# Install this package
-RUN pip install git+https://github.com/outlierbio/ob-pipelines
+VOLUME ["/scratch"]
+ENV SCRATCH_DIR=/scratch
 
-# Download/upload S3 paths in any command
-ENTRYPOINT ["s3wrap"]
+# Install or ADD this package
+# RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
+ADD ./setup.py /src/
+ADD ./test /src/test
+ADD ./ob_pipelines/*.py /src/ob_pipelines/
+RUN cd /src && pip install -e .

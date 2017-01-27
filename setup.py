@@ -9,13 +9,13 @@ setup(
     packages=find_packages(),
     description='Bioinformatics apps (using Docker) and workflows (using Luigi) and Docker',
     include_package_data=True,
-    install_requires=[
-        'boto3',
-        'click',
-        'luigi'
-    ],
+    # install_requires=[
+    #     'boto3',
+    #     'click',
+    #     'luigi'
+#    ],
     entry_points='''
         [console_scripts]
-        s3wrap=ob_pipelines.s3wrap:s3wrap
+        s3wrap=ob_pipelines.s3:s3wrap
     '''
 )

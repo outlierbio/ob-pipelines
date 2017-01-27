@@ -7,4 +7,8 @@ ADD https://github.com/samtools/samtools/releases/download/1.3/samtools-1.3.tar.
 RUN tar xvjf samtools-1.3.tar.bz2 && \
   cd /samtools-1.3 && \
   make && \
+  chmod 777 /samtools-1.3/samtools && \
   mv /samtools-1.3/samtools /usr/local/bin/
+
+ADD samtools.py /
+ENTRYPOINT ["s3wrap"]
