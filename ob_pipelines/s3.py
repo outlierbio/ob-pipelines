@@ -71,14 +71,21 @@ def s3args(f):
             try:
                 if src_key.endswith('/'):
                     # Download all files in folder
-                    local_tmp = mkdtemp(prefix=op.basename(arg) + '_', dir=SCRATCH_DIR)
+                    local_tmp = mkdtemp(
+                        prefix=op.basename(arg) + '_', 
+                        dir=SCRATCH_DIR)
                     download_folder(src_bucket, src_key, local_tmp)
                 else:
-                    _, local_tmp = mkstemp(prefix=op.basename(arg) + '_', dir=SCRATCH_DIR)
+                    fname = op.basename(arg)
+                    base, ext = op.splitext(fname)
+                    _, local_tmp = mkstemp(prefix=base + '_',
+                                           suffix=ext,
+                                           dir=SCRATCH_DIR)
                     s3.download_file(src_bucket, src_key, local_tmp)
             # TODO check for specifically key not found errors
             except botocore.exceptions.ClientError as e:
                 s3_outputs[arg] = local_tmp
+                os.remove(local_tmp)
             local_args.append(local_tmp)
 
         # Run command and save output
@@ -87,7 +94,15 @@ def s3args(f):
         # Upload outputs
         for s3_path, local_path in s3_outputs.items():
             dst_bucket, dst_key = path_to_bucket_and_key(s3_path)
-            s3.upload_file(local_path, dst_bucket, dst_key)
+            if op.isfile(local_path):
+                # Upload file
+                s3.upload_file(local_path, dst_bucket, dst_key)
+            elif op.isdir(local_path):
+                # Upload directory
+                for fname in os.listdir(local_path):
+                    fpath = op.join(local_path, fname)
+                    dst_file = dst_key + '/' + fname
+                    s3.upload_file(fpath, dst_bucket, dst_file)
 
         return out
 
