@@ -5,7 +5,10 @@ import os.path as op
 from subprocess import check_output
 import sys
 from tempfile import mkstemp, mkdtemp
-from urllib.parse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 import boto3
 import botocore
