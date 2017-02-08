@@ -10,5 +10,4 @@ RUN tar xvjf samtools-1.3.tar.bz2 && \
   chmod 777 /samtools-1.3/samtools && \
   mv /samtools-1.3/samtools /usr/local/bin/
 
-ADD samtools.py /
-ENTRYPOINT ["s3wrap"]
+ENTRYPOINT ["s3wrap", "samtools"]
