@@ -1,10 +1,9 @@
 import os.path as op
-from subprocess import check_output
 import logging
 
 import click
 
-from ob_pipelines.s3 importsync_and_run, SCRATCH_DIR, s3, path_to_bucket_and_key
+from ob_pipelines.s3 import sync_and_run, SCRATCH_DIR, s3, path_to_bucket_and_key
 
 logger = logging.getLogger('ob-pipelines')
 
@@ -59,8 +58,7 @@ def align(fq1, fq2, genome_dir, prefix, threads):
         '--outSAMattributes', 'All',
         '--outSAMstrandField', 'intronMotif',
         '--outSAMtype', 'BAM', 'SortedByCoordinate',
-        '--outBAMcompression', '6',
-        '--outBAMsortingThreadN', str(threads)
+        '--outBAMcompression', '6'
     ]
     print(' '.join(cmd))
     logging.info('Running:\n{}'.format(' '.join(cmd)))
