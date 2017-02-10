@@ -188,12 +188,12 @@ def s3args(rm_local_outpath=True):
 def s3wrap():
     parser = argparse.ArgumentParser(description='Swap S3 commands for temporary local paths and download')
     parser.add_argument('--rm-local-outpath', '-r', action='store_true', help='Remove local tmp output file/folder before executing command')
-    parser.add_argument('command', nargs='+')
+    parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     @s3args(rm_local_outpath=args.rm_local_outpath)
     def sync_and_run(*cmds):
-        logger.info('Running:\n{}'.format(' '.join(cmds)))
+        print('Running:\n{}'.format(' '.join(cmds)))
         return check_output(cmds)
 
     out = sync_and_run(*args.command) 
