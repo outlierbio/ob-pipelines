@@ -116,7 +116,7 @@ def test_swap_args(s3_inpath):
 
 
 def test_local_fn_run_unaltered():
-    @s3args
+    @s3args()
     def echo(arg1, arg2):
         return check_output(['echo', arg1, arg2])
     
@@ -126,7 +126,7 @@ def test_local_fn_run_unaltered():
 
 @pytest.mark.skipif(TEST_BUCKET is None, reason='Need an accessible S3 bucket')
 def test_upload_s3_s3args(s3_outpath):
-    @s3args
+    @s3args()
     def write_message(arg1, arg2):
         out = check_output(['echo', arg1])
         with open(arg2, 'w') as fw:
@@ -138,7 +138,7 @@ def test_upload_s3_s3args(s3_outpath):
 
 @pytest.mark.skipif(TEST_BUCKET is None, reason='Need an accessible S3 bucket')
 def test_download_file_s3args(s3_inpath):
-    @s3args
+    @s3args()
     def cat_message(arg1, arg2):
         with open(arg2) as f:
             msg = f.read().strip()
@@ -150,7 +150,7 @@ def test_download_file_s3args(s3_inpath):
 
 @pytest.mark.skipif(TEST_BUCKET is None, reason='Need an accessible S3 bucket')
 def test_download_folder_s3args(s3_infolder):
-    @s3args
+    @s3args()
     def cat_message(msg, folder):
         files = os.listdir(folder)
         for fpath in files:

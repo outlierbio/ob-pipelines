@@ -1,3 +1,4 @@
+import argparse
 from functools import wraps
 import logging
 import os
@@ -98,7 +99,14 @@ def upload_file_or_folder(s3_path, local_path):
         upload_folder(local_path, bucket, key)
 
 
-def swap_args(args):
+def remove_file_or_folder(fpath):
+    if op.isdir(fpath):
+        shutil.rmtree(fpath)
+    else:
+        os.remove(fpath)
+
+
+def swap_args(args, rm_local_outpath=True):
     """Swap S3 paths in arguments with local paths
     
     If the S3 path exists, it's an input, download first and swap the arg
@@ -129,17 +137,15 @@ def swap_args(args):
             s3_downloads[arg] = local_tmp
         else:
             s3_uploads[arg] = local_tmp
-            if op.isdir(local_tmp):
-                shutil.rmtree(local_tmp)
-            else:
-                os.remove(local_tmp)
+            if rm_local_outpath:
+                remove_file_or_folder(local_tmp)
 
         local_args.append(local_tmp)
 
     return local_args, s3_downloads, s3_uploads
 
 
-def s3args(f):
+def s3args(rm_local_outpath=True):
     """Sync S3 path arguments with behind-the-scenes S3 transfers
 
     When decorating a function, s3args downloads all arguments that 
@@ -153,34 +159,43 @@ def s3args(f):
 
     Keyword args are passed directly without syncing, for now.
     """
-    @wraps(f)
-    def local_fn(*args, **kwargs):
+    def s3args_decorator(f):
+        @wraps(f)
+        def local_fn(*args, **kwargs):
 
-        # Swap the S3 path arguments for local temporary files/folders
-        local_args, s3_downloads, s3_uploads = swap_args(args)
+            # Swap the S3 path arguments for local temporary files/folders
+            local_args, s3_downloads, s3_uploads = swap_args(args, rm_local_outpath=rm_local_outpath)
 
-        # Download inputs
-        for s3_path, local_path in s3_downloads.items():
-            download_file_or_folder(s3_path, local_path)
+            # Download inputs
+            logger.debug('syncing from S3')
+            for s3_path, local_path in s3_downloads.items():
+                download_file_or_folder(s3_path, local_path)
 
-        # Run command and save output
-        out = f(*local_args, **kwargs)
+            # Run command and save output
+            out = f(*local_args, **kwargs)
 
-        # Upload outputs
-        for s3_path, local_path in s3_uploads.items():
-            upload_file_or_folder(s3_path, local_path)
+            # Upload outputs
+            logger.debug('uploading to S3')
+            for s3_path, local_path in s3_uploads.items():
+                upload_file_or_folder(s3_path, local_path)
 
-        return out
+            return out
 
-    return local_fn
-
-
-@s3args
-def sync_and_run(*cmds):
-    logger.info('Running:\n{}'.format(' '.join(cmds)))
-    check_output(cmds)
+        return local_fn
+    return s3args_decorator
 
 
 def s3wrap():
-    args = sys.argv[1:]
-    sync_and_run(*args)
+    parser = argparse.ArgumentParser(description='Swap S3 commands for temporary local paths and download')
+    parser.add_argument('--rm-local-outpath', '-r', action='store_true', help='Remove local tmp output file/folder before executing command')
+    parser.add_argument('command', nargs='+')
+    args = parser.parse_args()
+
+    @s3args(rm_local_outpath=args.rm_local_outpath)
+    def sync_and_run(*cmds):
+        logger.info('Running:\n{}'.format(' '.join(cmds)))
+        return check_output(cmds)
+
+    out = sync_and_run(*args.command) 
+    print(out.decode())
+
