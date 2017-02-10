@@ -2,6 +2,7 @@ from functools import wraps
 import logging
 import os
 import os.path as op
+import shutil
 from subprocess import check_output
 import sys
 from tempfile import mkstemp, mkdtemp
@@ -16,14 +17,45 @@ import botocore
 logger = logging.getLogger('ob-pipelines')
 
 s3 = boto3.client('s3')
+s3_resource = boto3.resource('s3')
 
 SCRATCH_DIR = os.environ.get('SCRATCH_DIR') or '/tmp'
+
+
+def create_tmp_from_key(key): 
+    """Create local temp file or folder depending on key path"""
+    if key.endswith('/'):
+        local_tmp = mkdtemp(
+            prefix=op.basename(key.rstrip('/')) + '_', 
+            dir=SCRATCH_DIR)
+    else:
+        fname = op.basename(key)
+        base, ext = op.splitext(fname)
+        _, local_tmp = mkstemp(prefix=base + '_',
+                               suffix=ext,
+                               dir=SCRATCH_DIR)
+    return local_tmp
 
 
 def path_to_bucket_and_key(path):
     (scheme, netloc, path, params, query, fragment) = urlparse(path)
     path_without_initial_slash = path[1:]
     return netloc, path_without_initial_slash
+
+
+def key_exists(bucket, key):
+    """Check for existence of S3 key"""
+    if key.endswith('/'):
+        return 'Contents' in s3.list_objects(Bucket=bucket, Prefix=key)
+    try:
+        s3_resource.Object(bucket, key).load()
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in ['404', '403']:
+            # Catches both bucket and key not found errors
+            return False
+        else:
+            raise
+    return True
 
 
 def download_folder(bucket, prefix, folder):
@@ -38,6 +70,73 @@ def download_folder(bucket, prefix, folder):
         key = key_dict['Key']
         fpath = op.join(folder, op.basename(key))
         s3.download_file(bucket, key, fpath)
+
+
+def upload_folder(folder, bucket, prefix):
+    # Upload directory
+    for fname in os.listdir(folder):
+        fpath = op.join(folder, fname)
+        key = prefix + fname
+        s3.upload_file(fpath, bucket, key)
+
+
+def download_file_or_folder(s3_path, local_path):
+    """Dispatch S3 download depending on key path"""
+    bucket, key = path_to_bucket_and_key(s3_path)
+    if key.endswith('/'):
+        download_folder(bucket, key, local_path)
+    else:
+        s3.download_file(bucket, key, local_path)
+
+
+def upload_file_or_folder(s3_path, local_path):
+    """Dispatch S3 upload depending on local path"""
+    bucket, key = path_to_bucket_and_key(s3_path)
+    if op.isfile(local_path):
+        s3.upload_file(local_path, bucket, key)
+    elif op.isdir(local_path):
+        upload_folder(local_path, bucket, key)
+
+
+def swap_args(args):
+    """Swap S3 paths in arguments with local paths
+    
+    If the S3 path exists, it's an input, download first and swap the arg
+    with a temporary filepath. Otherwise, it's an output, save for upload 
+    after the command.
+
+    Returns: 
+        tuple of (local_args, s3_downloads, s3_uploads)
+
+        where new_args contains the new argument list with local paths, 
+        and s3_outputs is a dict mapping local filepaths to s3 paths to 
+        transfer after execution.
+    """
+    s3_uploads = {}
+    s3_downloads = {}
+    local_args = []
+    for arg in args:
+        if not arg.startswith('s3://'):
+            local_args.append(arg)
+            continue
+        
+        src_bucket, src_key = path_to_bucket_and_key(arg)
+        local_tmp = create_tmp_from_key(src_key)
+        
+        # If key exists, add path to downloads, otherwise add path to 
+        # uploads and remove the file or folder
+        if key_exists(src_bucket, src_key):
+            s3_downloads[arg] = local_tmp
+        else:
+            s3_uploads[arg] = local_tmp
+            if op.isdir(local_tmp):
+                shutil.rmtree(local_tmp)
+            else:
+                os.remove(local_tmp)
+
+        local_args.append(local_tmp)
+
+    return local_args, s3_downloads, s3_uploads
 
 
 def s3args(f):
@@ -57,52 +156,19 @@ def s3args(f):
     @wraps(f)
     def local_fn(*args, **kwargs):
 
-        # Swap S3 paths in arguments with local paths
-        # If the S3 path exists, it's an input, download first.
-        # Otherwise, it's an output, save for upload after the command
-        s3_outputs = {}
-        local_args = []
-        for arg in args:
-            if not arg.startswith('s3://'):
-                local_args.append(arg)
-                continue
-            
-            src_bucket, src_key = path_to_bucket_and_key(arg)
-            try:
-                if src_key.endswith('/'):
-                    # Download all files in folder
-                    local_tmp = mkdtemp(
-                        prefix=op.basename(arg) + '_', 
-                        dir=SCRATCH_DIR)
-                    download_folder(src_bucket, src_key, local_tmp)
-                else:
-                    fname = op.basename(arg)
-                    base, ext = op.splitext(fname)
-                    _, local_tmp = mkstemp(prefix=base + '_',
-                                           suffix=ext,
-                                           dir=SCRATCH_DIR)
-                    s3.download_file(src_bucket, src_key, local_tmp)
-            # TODO check for specifically key not found errors
-            except botocore.exceptions.ClientError as e:
-                s3_outputs[arg] = local_tmp
-                os.remove(local_tmp)
-            local_args.append(local_tmp)
+        # Swap the S3 path arguments for local temporary files/folders
+        local_args, s3_downloads, s3_uploads = swap_args(args)
+
+        # Download inputs
+        for s3_path, local_path in s3_downloads.items():
+            download_file_or_folder(s3_path, local_path)
 
         # Run command and save output
         out = f(*local_args, **kwargs)
 
         # Upload outputs
-        for s3_path, local_path in s3_outputs.items():
-            dst_bucket, dst_key = path_to_bucket_and_key(s3_path)
-            if op.isfile(local_path):
-                # Upload file
-                s3.upload_file(local_path, dst_bucket, dst_key)
-            elif op.isdir(local_path):
-                # Upload directory
-                for fname in os.listdir(local_path):
-                    fpath = op.join(local_path, fname)
-                    dst_file = dst_key + '/' + fname
-                    s3.upload_file(fpath, dst_bucket, dst_file)
+        for s3_path, local_path in s3_uploads.items():
+            upload_file_or_folder(s3_path, local_path)
 
         return out
 
