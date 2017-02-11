@@ -39,10 +39,3 @@ RUN pip install \
 
 VOLUME ["/scratch"]
 ENV SCRATCH_DIR=/scratch
-
-# Install or ADD this package
-# RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
-ADD ./setup.py /src/
-ADD ./test /src/test
-ADD ./ob_pipelines/*.py /src/ob_pipelines/
-RUN cd /src && pip install -e .

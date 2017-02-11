@@ -1,4 +1,5 @@
 import logging
+import os
 
 logger = logging.getLogger('ob-pipelines')
 
@@ -7,6 +8,6 @@ formatter = logging.Formatter('%(asctime)s - %(message)s')
 
 # Add a console handler
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(os.environ.get('LOGGING_LEVEL') or logging.DEBUG)
 ch.setFormatter(formatter)
 logger.addHandler(ch)

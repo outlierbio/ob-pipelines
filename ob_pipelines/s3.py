@@ -165,7 +165,7 @@ def s3args(rm_local_outpath=False):
             local_args, s3_downloads, s3_uploads = swap_args(args, rm_local_outpath=rm_local_outpath)
 
             # Download inputs
-            logger.debug('syncing from S3')
+            logger.info('syncing from S3')
             for s3_path, local_path in s3_downloads.items():
                 download_file_or_folder(s3_path, local_path)
 
@@ -173,7 +173,7 @@ def s3args(rm_local_outpath=False):
             out = f(*local_args, **kwargs)
 
             # Upload outputs
-            logger.debug('uploading to S3')
+            logger.info('uploading to S3')
             for s3_path, local_path in s3_uploads.items():
                 upload_file_or_folder(s3_path, local_path)
 
