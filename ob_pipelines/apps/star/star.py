@@ -1,20 +1,22 @@
 import os.path as op
 import logging
+from subprocess import check_output
 
 import click
 
-from ob_pipelines.s3 import sync_and_run, SCRATCH_DIR, s3, path_to_bucket_and_key
+from ob_pipelines.s3 import swap_args, download_file_or_folder, SCRATCH_DIR, s3, path_to_bucket_and_key
 
 logger = logging.getLogger('ob-pipelines')
 
 
-STAR_OUTPUTS = [
-    '{prefix}Aligned.sortedByCoord.out.bam',
-    '{prefix}SJ.out.tab',
-    '{prefix}Unmapped.out.mate1',
-    '{prefix}Unmapped.out.mate2',
-    '{prefix}Log.final.out'
-]
+STAR_OUTPUTS = {
+    'bam': '{prefix}Aligned.sortedByCoord.out.bam',
+    'junctions': '{prefix}SJ.out.tab',
+    'unmapped_1': '{prefix}Unmapped.out.mate1',
+    'unmapped_2': '{prefix}Unmapped.out.mate2',
+    'log': '{prefix}Log.final.out'
+}
+
 
 def upload_prefix(local_prefix, s3_prefix, fpath_templates):
     """Upload all files matching a template to S3"""
@@ -23,8 +25,6 @@ def upload_prefix(local_prefix, s3_prefix, fpath_templates):
     for local_fpath, s3_fpath in zip(local_fpaths, s3_fpaths):
         bucket, key = path_to_bucket_and_key(s3_fpath)
         s3.upload_file(local_fpath, bucket, key)
-
-
 
 
 @click.command()
@@ -60,13 +60,23 @@ def align(fq1, fq2, genome_dir, prefix, threads):
         '--outSAMtype', 'BAM', 'SortedByCoordinate',
         '--outBAMcompression', '6'
     ]
-    print(' '.join(cmd))
+
+    # Swap the S3 path arguments for local temporary files/folders
+    local_args, s3_downloads, _ = swap_args(cmd)
+
+    # Download inputs
+    logging.info('syncing from S3')
+    for s3_path, local_path in s3_downloads.items():
+        download_file_or_folder(s3_path, local_path)
+
+    # Run command and save output
     logging.info('Running:\n{}'.format(' '.join(cmd)))
-    sync_and_run(*cmd)
+    out = check_output(local_args)
+    logging.info(out.decode())
 
     # Upload temp out directory to S3 with prefix
     if prefix.startswith('s3://'):
-    	upload_prefix(local_prefix, prefix, STAR_OUTPUTS)
+    	upload_prefix(local_prefix, prefix, STAR_OUTPUTS.values())
 
 
 if __name__ == '__main__':
