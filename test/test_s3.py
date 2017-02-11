@@ -75,8 +75,10 @@ def test_key_exists(s3_inpath, s3_infolder):
     bucket, key = path_to_bucket_and_key(s3_inpath)
     assert key_exists(bucket, key)
     assert not key_exists(bucket, 'notakey')
+    assert not key_exists('notabucket', key)
 
     bucket, key = path_to_bucket_and_key(s3_infolder)
+    assert not key_exists('notabucket', key)
     assert key_exists(bucket, key)
 
 
@@ -101,18 +103,27 @@ def test_upload_folder(s3_outfolder):
 
 
 def test_swap_args(s3_inpath):
-    args = ['--param', 'arg', '/fpath/arg', 's3://nonexistent/s3/key', s3_inpath]
+    args = ['--param', 'arg', '/fpath/arg', 's3://nonexistent/s3/key', 's3://nonexistent/s3/folder/', s3_inpath]
     local_args, s3_downloads, s3_uploads = swap_args(args)
     assert len(local_args) == len(args)
     assert 'arg' in local_args
     assert '/fpath/arg' in local_args
     assert 's3://nonexistent/s3/key' not in local_args
-    assert s3_inpath not in local_args
-    
-    tmp_path_args = [arg for arg in local_args if arg.startswith('/tmp')]
-    assert len(tmp_path_args) == 2
+    assert s3_inpath not in local_args    
     assert 's3://nonexistent/s3/key' in s3_uploads
     assert s3_inpath in s3_downloads
+
+    tmp_path_args = [arg for arg in local_args if arg.startswith('/tmp')]
+    assert len(tmp_path_args) == 3
+    assert all([op.exists(path) for path in tmp_path_args])
+    assert sum([op.isdir(path) for path in tmp_path_args]) == 1
+    
+    local_args, s3_downloads, s3_uploads = swap_args(args, rm_local_outpath=True)
+    tmp_path_args = [arg for arg in local_args if arg.startswith('/tmp')]
+    assert len(tmp_path_args) == 3
+    assert sum([op.exists(path) for path in tmp_path_args]) == 1 # only s3_inpath exists, other local tmps removed
+    
+
 
 
 def test_local_fn_run_unaltered():

@@ -29,6 +29,7 @@ def create_tmp_from_key(key):
         local_tmp = mkdtemp(
             prefix=op.basename(key.rstrip('/')) + '_', 
             dir=SCRATCH_DIR)
+        local_tmp = local_tmp if local_tmp.endswith('/') else local_tmp + '/'
     else:
         fname = op.basename(key)
         base, ext = op.splitext(fname)
@@ -46,17 +47,14 @@ def path_to_bucket_and_key(path):
 
 def key_exists(bucket, key):
     """Check for existence of S3 key"""
-    if key.endswith('/'):
-        return 'Contents' in s3.list_objects(Bucket=bucket, Prefix=key)
     try:
-        s3_resource.Object(bucket, key).load()
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] in ['404', '403']:
-            # Catches both bucket and key not found errors
-            return False
+        if key.endswith('/'):
+            return 'Contents' in s3.list_objects(Bucket=bucket, Prefix=key)
         else:
-            raise
-    return True
+            s3_resource.Object(bucket, key).load()
+            return True
+    except botocore.exceptions.ClientError as e:
+            return False
 
 
 def download_folder(bucket, prefix, folder):
@@ -106,7 +104,7 @@ def remove_file_or_folder(fpath):
         os.remove(fpath)
 
 
-def swap_args(args, rm_local_outpath=True):
+def swap_args(args, rm_local_outpath=False):
     """Swap S3 paths in arguments with local paths
     
     If the S3 path exists, it's an input, download first and swap the arg
@@ -145,7 +143,7 @@ def swap_args(args, rm_local_outpath=True):
     return local_args, s3_downloads, s3_uploads
 
 
-def s3args(rm_local_outpath=True):
+def s3args(rm_local_outpath=False):
     """Sync S3 path arguments with behind-the-scenes S3 transfers
 
     When decorating a function, s3args downloads all arguments that 
