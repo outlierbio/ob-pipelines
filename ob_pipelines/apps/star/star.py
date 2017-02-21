@@ -1,10 +1,14 @@
 import os.path as op
 import logging
+import shutil
 from subprocess import check_output
+from tempfile import mkdtemp
 
 import click
 
-from ob_pipelines.s3 import swap_args, download_file_or_folder, SCRATCH_DIR, s3, path_to_bucket_and_key
+from ob_pipelines.s3 import (
+    swap_args, download_file_or_folder, remove_file_or_folder, SCRATCH_DIR, s3, path_to_bucket_and_key
+)
 
 logger = logging.getLogger('ob-pipelines')
 
@@ -39,7 +43,10 @@ def align(fq1, fq2, genome_dir, prefix, threads):
     # Output prefixes are messy and the s3args wrapper can't handle them
     # yet, so we have to manage the transfer of outputs here.
     if prefix.startswith('s3://'):
-        local_prefix = op.join(SCRATCH_DIR, op.basename(prefix)) 
+        tmp_dir = mkdtemp(
+            prefix='star_', 
+            dir=SCRATCH_DIR)
+        local_prefix = op.join(tmp_dir, op.basename(prefix)) 
     else: 
         local_prefix = prefix
 
@@ -76,8 +83,12 @@ def align(fq1, fq2, genome_dir, prefix, threads):
 
     # Upload temp out directory to S3 with prefix
     if prefix.startswith('s3://'):
-    	upload_prefix(local_prefix, prefix, STAR_OUTPUTS.values())
+        upload_prefix(local_prefix, prefix, STAR_OUTPUTS.values())
+        shutil.rmtree(tmp_dir)
+
+    for local_path in s3_downloads.values():
+        remove_file_or_folder(local_path)
 
 
 if __name__ == '__main__':
-	align()
+    align()

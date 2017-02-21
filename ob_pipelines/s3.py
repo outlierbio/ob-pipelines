@@ -5,7 +5,6 @@ import os
 import os.path as op
 import shutil
 from subprocess import check_output
-import sys
 from tempfile import mkstemp, mkdtemp
 try:
     from urllib.parse import urlparse
@@ -176,6 +175,10 @@ def s3args(rm_local_outpath=False):
             logger.info('uploading to S3')
             for s3_path, local_path in s3_uploads.items():
                 upload_file_or_folder(s3_path, local_path)
+
+            # Remove local files
+            for local_path in s3_downloads.values() + s3_uploads.values():
+                remove_file_or_folder(local_path)
 
             return out
 

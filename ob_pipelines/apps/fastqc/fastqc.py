@@ -6,7 +6,9 @@ from tempfile import mkdtemp
 
 import click
 
-from ob_pipelines.s3 import download_file_or_folder, s3, SCRATCH_DIR, path_to_bucket_and_key
+from ob_pipelines.s3 import (
+    s3, download_file_or_folder, remove_file_or_folder, SCRATCH_DIR, path_to_bucket_and_key
+)
 
 logger = logging.getLogger('ob-pipelines')
 
@@ -52,8 +54,10 @@ def fastqc(fq1, fq2, out_dir, name):
         # Upload temp out directory to S3 with prefix
         if out_dir.startswith('s3://'):
             bucket, key = path_to_bucket_and_key(out_dir)
-            print('uploading {} to s3://{}/{}{}'.format(fname, bucket, key, fname))
-            s3.upload_file(op.join(temp_dir, fname), bucket, key + fname)
+            local_fpath = op.join(temp_dir, fname)
+            print('uploading {} to s3://{}/{}{}'.format(local_fpath, bucket, key, fname))
+            s3.upload_file(local_fpath, bucket, key + fname)
+            remove_file_or_folder(local_fpath)
         else:
             shutil.move(temp_dir, out_dir)
 
