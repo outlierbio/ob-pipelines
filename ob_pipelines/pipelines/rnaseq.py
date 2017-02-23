@@ -4,6 +4,7 @@ import os.path as op
 
 from luigi.s3 import S3Target, S3PathTask
 from luigi import Parameter, BoolParameter, Task, WrapperTask
+from ob_airtable import get_record_by_name, get_record
 import requests
 
 from ob_pipelines.s3 import csv_to_s3
@@ -15,6 +16,9 @@ logger = logging.getLogger('luigi-interface')
 
 AIRTABLE_API_KEY = os.environ.get('AIRTABLE_API_KEY')
 API_ENDPOINT = os.environ.get('AIRTABLE_API_ENDPOINT')
+AIRTABLE_EXPT_TABLE = 'Genomics%20Expt'
+AIRTABLE_SAMPLE_TABLE = 'Genomics%20Sample'
+
 S3_BUCKET = os.environ.get('S3_BUCKET')
 DOCKER_RUN = [
     'docker', 'run',
@@ -44,49 +48,12 @@ def get_index(tool, species='human', build='latest'):
     return indexes[tool][species][build]
 
 
-def _request(method, table, path, **kwargs):
-    """Make a generic request with the Airtable API"""
-    headers = {'Authorization': 'Bearer ' + AIRTABLE_API_KEY}
-    url = API_ENDPOINT + table + path
-
-    response = requests.request(method.upper(), url, headers=headers, **kwargs)
-    response.raise_for_status()
-    content = response.json()
-    return content
-
-
-def get_sample_by_key(key):
-    """Retrieve Samples record by key from Airtable API"""
-    return _request('get', 'Genomics%20Sample', '/' + key)
-
-
-def get_sample(sample_id):
-    """Retrieve Samples record by name from Airtable API"""
-    params = {
-        'filterByFormula': '{Name} = "%s"' % sample_id,
-    }
-    records = _request('get', 'Genomics%20Sample', '/', params=params)['records']
-    return records[0]
-
-
-def get_experiment_by_key(key):
-    """Retrieve Experiment record by key from Airtable API"""
-    return _request('get', 'Genomics%20Expt', '/' + key)
-
-
-def get_experiment(expt_id):
-    """Retrieve Experiment record by Name from Airtable API"""
-    params = {
-        'filterByFormula': '{Name} = "%s"' % expt_id,
-    }
-    return _request('get', 'Genomics%20Expt', '/', params=params)['records'][0]
-
-
 def get_samples(expt_id):
-    sample_keys = get_experiment(expt_id)['fields']['Genomics samples']
+    expt = get_record_by_name(expt_id, AIRTABLE_EXPT_TABLE)
+    sample_keys = expt['fields']['Genomics samples']
 
     for sample_key in sample_keys:
-        sample = get_sample_by_key(sample_key)
+        sample = get_record(sample_key, AIRTABLE_SAMPLE_TABLE)
         yield sample['fields']['Name']
 
 
@@ -97,7 +64,7 @@ class Sample(object):
     @property
     def sample(self):
         if not hasattr(self, '_sample'):
-            self._sample = get_sample(self.sample_id)['fields']
+            self._sample = get_record_by_name(self.sample_id, AIRTABLE_SAMPLE_TABLE)['fields']
         return self._sample
 
     @property
@@ -110,7 +77,8 @@ class Sample(object):
     @property
     def experiment(self):
         if not hasattr(self, '_experiment'):
-            self._experiment = get_experiment_by_key(self.sample['Experiment'][0])['fields']
+            expt_key = self.sample['Experiment'][0]
+            self._experiment = get_record(expt_key, AIRTABLE_EXPT_TABLE)['fields']
         return self._experiment
 
 
