@@ -47,6 +47,7 @@ import os
 import logging
 import random
 import string
+from subprocess import check_output
 import time
 
 import luigi
@@ -71,10 +72,12 @@ try:
 except ImportError:
     logger.warning('boto3 is not installed. BatchTasks require boto3')
 
+
 class BatchJobException(Exception):
     pass
 
-POLL_TIME = 2
+
+POLL_TIME = 10
 
 
 def random_id():
@@ -111,45 +114,27 @@ def _track_job(job_id):
             job_id, status))
 
 
-class BatchTask(luigi.Task):
+def register_job_definition(json_fpath):
+    """Register a job definition with AWS Batch, using a JSON"""
+    with open(json_fpath) as f:
+        job_def = json.load(f)
+    response = client.register_job_definition(**job_def)
+    status_code = response['ResponseMetadata']['HTTPStatusCode']
+    if status_code != 200:
+        msg = 'Register job definition request received status code {0}:\n{1}'
+        raise Exception(msg.format(status_code, response))
+    return response
 
-    """
-    Base class for an Amazon Batch job
 
-    Amazon Batch requires you to register "jobs", which are JSON descriptions
-    for how to issue the ``docker run`` command. This Luigi Task can either
-    run a pre-registered Batch jobDefinition, OR you can register the job on 
-    the fly from a Python dict.
+class DockerTask(luigi.Task):
 
-    :param job_def_arn: pre-registered job definition ARN (Amazon Resource
-        Name), of the form::
-
-            arn:aws:batch:<region>:<user_id>:job-definition/<job-name>:<version>
-
-    :param job_def: dict describing job in jobDefinition JSON format, for
-        example::
-
-            job_def = {
-                'family': 'hello-world',
-                'volumes': [],
-                'containerDefinitions': [
-                    {
-                        'memory': 1,
-                        'essential': True,
-                        'name': 'hello-world',
-                        'image': 'ubuntu',
-                        'command': ['/bin/echo', 'hello world']
-                    }
-                ]
-            }
-
-    """
-
-    job_name = luigi.Parameter(default='')
-    job_def_arn = luigi.Parameter(default='')
-    job_def = luigi.DictParameter(default={})
-    vcpus = luigi.IntParameter(default=1)
-    memory = luigi.IntParameter(default=4)
+    environment = {
+        'AWS_ACCESS_KEY_ID': os.environ.get('AWS_ACCESS_KEY_ID'),
+        'AWS_SECRET_ACCESS_KEY': os.environ.get('AWS_SECRET_ACCESS_KEY')
+    }
+    volumes = {'/tmp': '/scratch'}
+    image = ''
+    command = []
 
     @property
     def parameters(self):
@@ -160,34 +145,52 @@ class BatchTask(luigi.Task):
         """
         return {}
 
-    @property
-    def environment(self):
-        """
-        Environment variables to pass to the container
+    def from_job_definition(self):
+        pass
 
-        Override to return a list of dicts with keys 'name' and 'value', for 
-        passing environment variables. For example::
+    def build_batch_job_definition(self):
+        pass
 
-            return [{'name': 'foo', 'value': 'bar'}]
+    def _build_command(self):
+        def get_param(arg):
+            return self.parameters[arg.split('::')[1]]
+        return [get_param(arg) if arg.startswith('Ref::') else arg 
+                for arg in self.command]
 
-        """
-        return []
+    def build_docker_run(self):
+        cmd = ['docker', 'run']
+        for name, value in self.environment.items():
+            cmd += ['-e', '{}={}'.format(name, value)]
+        for host, target in self.volumes.items(): 
+            cmd += ['-v', '{}:{}'.format(host, target)]
+        
+        cmd.append(self.image)
 
-    @property
-    def command(self):
-        """
-        Command passed to the containers
+        command = self._build_command()
+        cmd += command
 
-        Override to return list of strings describing new command to override
-        Docker CMD within the container. Use "Ref::param_name" for template parameters
-        that can be filled dynamically with self.parameters. For example::
+        return cmd
 
-            return ['/bin/sleep', 'Ref::duration']
 
-        In this case, you would want self.parameters to return {'duration': <int>}
+class BatchTask(DockerTask):
 
-        """
-        return []
+    """
+    Base class for an Amazon Batch job
+
+    Amazon Batch requires you to register "jobs", which are JSON descriptions
+    for how to issue the ``docker run`` command. This Luigi Task can either
+    run a pre-registered Batch jobDefinition, OR you can register the job on 
+    the fly from a Python dict.
+
+    :param job_definition: pre-registered job definition ARN (Amazon Resource
+        Name), of the form::
+
+            arn:aws:batch:<region>:<user_id>:job-definition/<job-name>:<version>
+
+    """
+
+    job_definition = luigi.Parameter()
+    job_name = luigi.Parameter(default='', significant=False)
 
     @property
     def batch_job_id(self):
@@ -196,32 +199,29 @@ class BatchTask(luigi.Task):
             return self._job_id
 
     def run(self):
-        if (not self.job_def and not self.job_def_arn) or \
-           (self.job_def and self.job_def_arn):
-            raise ValueError(('Either (but not both) a job_def (dict) or'
-                              'job_def_arn (string) must be assigned'))
-        if not self.job_def_arn:
-            # Register the job and get assigned jobDefinition ID (arn)
-            response = client.register_job_definition(**self.job_def)
-            self.job_def_arn = response['jobDefinitionArn']
+        if self.local:
+            self.run_local()
+            return
 
-        # Add custom command to job
-        overrides = {
-            'vcpus': self.vcpus,
-            'memory': self.memory,
-            'command': self.command,
-            'environment': self.environment,
-        }
+        # Get jobId if it already exists
+        self._job_id = None
+        if self.job_name:
+            # Job name is unique. If the job exists, use its id
+            jobs = client.list_jobs(jobQueue=queue_name, jobStatus='RUNNING')['jobSummaryList']
+            matching_jobs = [job for job in jobs if job['jobName'] == self.job_name]
+            if matching_jobs:
+                self._job_id = matching_jobs[0]['jobId']
 
-        # Submit the job to AWS Batch and get assigned job ID
-        # (list containing 1 string)
-        response = client.submit_job(
-            jobName = self.job_name or random_id(),
-            jobQueue = queue['jobQueueArn'],
-            jobDefinition = self.job_def_arn,
-            parameters = self.parameters,
-            containerOverrides=overrides)
-        self._job_id = response['jobId']
+
+        # Submit the job to AWS Batch if it doesn't exist, get assigned job ID
+        if not self._job_id:
+            response = client.submit_job(
+                jobName = self.job_name or random_id(),
+                jobQueue = queue_name,
+                jobDefinition = self.job_definition,
+                parameters = self.parameters
+            )
+            self._job_id = response['jobId']
 
         # Wait on job completion
         status = _track_job(self._job_id)
@@ -230,4 +230,11 @@ class BatchTask(luigi.Task):
         if status == 'FAILED':
             data = client.describe_jobs(jobs=[self._job_id])['jobs']
             raise BatchJobException('Job {}: {}'.format(self._job_id, json.dumps(data, indent=4)))
+
+    def run_local(self):
+        cmd = self.build_docker_run()
+        logger.info('Running local Docker command:\n{}'.format(' '.join(cmd)))
+        out = check_output(cmd)
+        logger.info(out.decode())
+
 
