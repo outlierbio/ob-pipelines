@@ -9,6 +9,9 @@ RUN wget http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5
 	chmod 777 /FastQC/fastqc
 ENV PATH /FastQC:$PATH
 
+VOLUME ["/scratch"]
+ENV SCRATCH_DIR=/scratch
+
 RUN pip install git+https://github.com/outlierbio/ob-pipelines
 
 ADD ./fastqc.py /

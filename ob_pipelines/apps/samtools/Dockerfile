@@ -10,6 +10,9 @@ RUN tar xvjf samtools-1.3.tar.bz2 && \
   chmod 777 /samtools-1.3/samtools && \
   mv /samtools-1.3/samtools /usr/local/bin/
 
+VOLUME ["/scratch"]
+ENV SCRATCH_DIR=/scratch
+
 RUN pip install git+https://github.com/outlierbio/ob-pipelines
 
 ENTRYPOINT ["s3wrap", "samtools"]
