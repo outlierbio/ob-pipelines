@@ -178,7 +178,7 @@ class IndexBam(PipelineTask, Sample):
         return S3Target(self.input()['bam'].path + '.bai')
 
 
-class GeneCoverage(BatchTask, Sample):
+class GeneCoverage(PipelineTask, Sample):
 
     job_definition = 'gene-coverage'
     image = 'outlierbio/rseqc'
