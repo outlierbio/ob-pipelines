@@ -1,0 +1,35 @@
+{
+    "jobDefinitionName": "samtools-index",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/samtools",
+        "vcpus": 2,
+        "memory": 800,
+        "command": [
+            "index",
+            "Ref::input",
+            "Ref::output"
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            }
+        ],        
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            }
+        ],
+        "volumes": [
+            {
+                "name": "scratch",
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                }
+            }
+        ]
+    }
+}

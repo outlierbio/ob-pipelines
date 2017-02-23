@@ -1,0 +1,36 @@
+{
+    "jobDefinitionName": "fastqc",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/fastqc",
+        "vcpus": 2,
+        "memory": 2000,
+        "command": [
+            "Ref::fq1",
+            "Ref::fq2",
+            "Ref::out_dir",
+            "Ref::name"
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            }
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            }
+        ]
+    }
+}

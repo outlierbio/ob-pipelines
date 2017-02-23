@@ -1,0 +1,53 @@
+{
+    "jobDefinitionName": "kallisto",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/kallisto",
+        "vcpus": 20,
+        "memory": 50000,
+        "command": [
+            "quant",
+            "-i", "Ref::index",
+            "-o", "Ref::output",
+            "-t", "20"
+            "Ref::reads1", 
+            "Ref::reads2"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            },
+            {
+                "host": {
+                    "sourcePath": "/mnt/reference"
+                },
+                "name": "reference"
+            }
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            },
+            {
+                "name": "REFERENCE_DIR",
+                "value": "/reference"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            },
+            {
+                "containerPath": "/reference",
+                "readOnly": true,
+                "sourceVolume": "reference"
+            }
+        ]
+    }
+}

@@ -1,0 +1,56 @@
+{
+    "jobDefinitionName": "star",
+    "type": "container",
+    "parameters": {
+        "threads": 20,
+    },
+    "containerProperties": {
+        "image": "outlierbio/star",
+        "vcpus": 20,
+        "memory": 50000,
+        "command": [
+            "star_align",
+            "Ref::fq1",
+            "Ref::fq2",
+            "Ref::genome_dir",
+            "Ref::prefix",
+            "Ref::threads"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            },
+            {
+                "host": {
+                    "sourcePath": "/mnt/reference"
+                },
+                "name": "reference"
+            }
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            },
+            {
+                "name": "REFERENCE_DIR",
+                "value": "/reference"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            },
+            {
+                "containerPath": "/reference",
+                "readOnly": true,
+                "sourceVolume": "reference"
+            }
+        ]
+    }
+}
