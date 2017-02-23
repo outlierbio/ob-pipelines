@@ -1,5 +1,6 @@
 import argparse
 from functools import wraps
+from io import StringIO
 import logging
 import os
 import os.path as op
@@ -20,6 +21,18 @@ s3 = boto3.client('s3')
 s3_resource = boto3.resource('s3')
 
 SCRATCH_DIR = os.environ.get('SCRATCH_DIR') or '/tmp'
+
+
+def csv_to_s3(df, s3_path):
+    """Write pandas DataFrame to S3 object"""
+
+    # Write dataframe to buffer
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer)
+
+    # Upload CSV to S3
+    bucket, key = path_to_bucket_and_key(s3_path)
+    s3_resource.Object(bucket, key).put(Body=csv_buffer.getvalue())
 
 
 def create_tmp_from_key(key): 
