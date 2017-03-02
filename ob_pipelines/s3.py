@@ -190,7 +190,8 @@ def s3args(rm_local_outpath=False):
                 upload_file_or_folder(s3_path, local_path)
 
             # Remove local files
-            for local_path in s3_downloads.values() + s3_uploads.values():
+            local_paths = list(s3_downloads.values()) + list(s3_uploads.values())
+            for local_path in local_paths:
                 remove_file_or_folder(local_path)
 
             return out
