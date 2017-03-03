@@ -98,6 +98,13 @@ def download_file_or_folder(s3_path, local_path):
         download_folder(bucket, key, local_path)
     else:
         s3.download_file(bucket, key, local_path)
+        if key.endswith('.bam'):
+            # Always download a BAM index if it exists
+            possible_index_keys = [key + '.bai', key.replace('.bam', '.bai')]
+            for index_key in possible_index_keys:
+                if key_exists(bucket, index_key):
+                    s3.download_file(bucket, index_key, local_path + '.bai')
+
 
 
 def upload_file_or_folder(s3_path, local_path):
