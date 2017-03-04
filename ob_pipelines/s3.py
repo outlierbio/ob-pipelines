@@ -91,6 +91,21 @@ def upload_folder(folder, bucket, prefix):
         s3.upload_file(fpath, bucket, key)
 
 
+def upload_prefix(local_prefix, s3_prefix, fpath_templates):
+    """Upload all files matching a prefix template to S3
+
+    Params
+        local_prefix: absolute filepath prefix of local files
+        s3_prefix: full S3 URI prefix for S3 files
+        fpath_templates: list of filepath strings containing {prefix} template
+    """
+    local_fpaths = [fpath.format(prefix=local_prefix) for fpath in fpath_templates]
+    s3_fpaths = [fpath.format(prefix=s3_prefix) for fpath in fpath_templates]
+    for local_fpath, s3_fpath in zip(local_fpaths, s3_fpaths):
+        bucket, key = path_to_bucket_and_key(s3_fpath)
+        s3.upload_file(local_fpath, bucket, key)
+
+
 def download_file_or_folder(s3_path, local_path):
     """Dispatch S3 download depending on key path"""
     bucket, key = path_to_bucket_and_key(s3_path)
