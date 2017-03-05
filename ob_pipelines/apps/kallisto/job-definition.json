@@ -9,7 +9,7 @@
             "quant",
             "-i", "Ref::index",
             "-o", "Ref::output",
-            "-t", "20"
+            "-t", "20",
             "Ref::reads1", 
             "Ref::reads2"
         ],

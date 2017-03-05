@@ -1,15 +1,11 @@
 {
     "jobDefinitionName": "star",
     "type": "container",
-    "parameters": {
-        "threads": 20,
-    },
     "containerProperties": {
         "image": "outlierbio/star",
         "vcpus": 20,
         "memory": 50000,
         "command": [
-            "star_align",
             "Ref::fq1",
             "Ref::fq2",
             "Ref::genome_dir",

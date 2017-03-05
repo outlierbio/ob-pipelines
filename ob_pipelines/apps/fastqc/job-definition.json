@@ -4,7 +4,7 @@
     "containerProperties": {
         "image": "outlierbio/fastqc",
         "vcpus": 2,
-        "memory": 2000,
+        "memory": 8000,
         "command": [
             "Ref::fq1",
             "Ref::fq2",
