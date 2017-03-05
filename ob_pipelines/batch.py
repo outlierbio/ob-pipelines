@@ -64,11 +64,9 @@ try:
     if not queues:
         logger.warning('No job queues with state=ENABLED and status=VALID')
 
-    # Allow queue to be specified as env var, or just pick the first one
-    queue_name = list(queues.keys())[0] or os.environ.get('BATCH_QUEUE_NAME')
+    # Pick the first queue as default
+    DEFAULT_QUEUE_NAME = list(queues.keys())[0]
 
-    # Get queue to submit jobs
-    queue = queues[queue_name]
 except ImportError:
     logger.warning('boto3 is not installed. BatchTasks require boto3')
 
@@ -191,6 +189,7 @@ class BatchTask(DockerTask):
 
     job_definition = luigi.Parameter()
     job_name = luigi.Parameter(default='', significant=False)
+    queue_name = luigi.Parameter(default='', significant=False)
 
     @property
     def batch_job_id(self):
@@ -202,6 +201,9 @@ class BatchTask(DockerTask):
         if self.local:
             self.run_local()
             return
+
+        # Use default queue if none specified
+        queue_name = self.queue_name or DEFAULT_QUEUE_NAME
 
         # Get jobId if it already exists
         self._job_id = None

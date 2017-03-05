@@ -4,30 +4,17 @@ import os.path as op
 
 from luigi.s3 import S3Target, S3PathTask
 from luigi import Parameter, BoolParameter, Task, WrapperTask
-from ob_airtable import get_record_by_name, get_record
-import requests
 
+from ob_pipelines.sample import Sample, get_samples
 from ob_pipelines.s3 import csv_to_s3
 from ob_pipelines.batch import BatchTask
 from ob_pipelines.apps.star import STAR_OUTPUTS
+from ob_pipelines.apps.rseqc import GENE_COVERAGE_OUTPUTS
 from ob_pipelines.apps.kallisto import merge_column
 
 logger = logging.getLogger('luigi-interface')
 
-AIRTABLE_API_KEY = os.environ.get('AIRTABLE_API_KEY')
-API_ENDPOINT = os.environ.get('AIRTABLE_API_ENDPOINT')
-AIRTABLE_EXPT_TABLE = 'Genomics%20Expt'
-AIRTABLE_SAMPLE_TABLE = 'Genomics%20Sample'
-
 S3_BUCKET = os.environ.get('S3_BUCKET')
-DOCKER_RUN = [
-    'docker', 'run',
-    '-e', 'AWS_ACCESS_KEY_ID=' + os.environ['AWS_ACCESS_KEY_ID'],
-    '-e', 'AWS_SECRET_ACCESS_KEY=' + os.environ['AWS_SECRET_ACCESS_KEY'],
-    '-e', 'SCRATCH_DIR=/scratch',
-    '-v', '/tmp:/scratch']
-THREADS = 2
-
 
 
 def get_index(tool, species='human', build='latest'):
@@ -46,40 +33,6 @@ def get_index(tool, species='human', build='latest'):
         }
     }
     return indexes[tool][species][build]
-
-
-def get_samples(expt_id):
-    expt = get_record_by_name(expt_id, AIRTABLE_EXPT_TABLE)
-    sample_keys = expt['fields']['Genomics samples']
-
-    for sample_key in sample_keys:
-        sample = get_record(sample_key, AIRTABLE_SAMPLE_TABLE)
-        yield sample['fields']['Name']
-
-
-class Sample(object):
-
-    sample_id = Parameter()
-
-    @property
-    def sample(self):
-        if not hasattr(self, '_sample'):
-            self._sample = get_record_by_name(self.sample_id, AIRTABLE_SAMPLE_TABLE)['fields']
-        return self._sample
-
-    @property
-    def sample_folder(self):
-        return '{expt}/{sample}'.format(
-            bucket=S3_BUCKET,
-            expt = self.experiment['Name'],
-            sample=self.sample_id)
-
-    @property
-    def experiment(self):
-        if not hasattr(self, '_experiment'):
-            expt_key = self.sample['Experiment'][0]
-            self._experiment = get_record(expt_key, AIRTABLE_EXPT_TABLE)['fields']
-        return self._experiment
 
 
 class PipelineTask(BatchTask):
