@@ -71,23 +71,25 @@ def align(fq1, fq2, genome_dir, prefix, threads):
     # Swap the S3 path arguments for local temporary files/folders
     local_args, s3_downloads, _ = swap_args(cmd)
 
-    # Download inputs
-    logging.info('syncing from S3')
-    for s3_path, local_path in s3_downloads.items():
-        download_file_or_folder(s3_path, local_path)
+    try:
+        # Download inputs
+        logging.info('syncing from S3')
+        for s3_path, local_path in s3_downloads.items():
+            download_file_or_folder(s3_path, local_path)
 
-    # Run command and save output
-    logging.info('Running:\n{}'.format(' '.join(cmd)))
-    out = check_output(local_args)
-    logging.info(out.decode())
+        # Run command and save output
+        logging.info('Running:\n{}'.format(' '.join(cmd)))
+        out = check_output(local_args)
+        logging.info(out.decode())
 
-    # Upload temp out directory to S3 with prefix
-    if prefix.startswith('s3://'):
-        upload_prefix(local_prefix, prefix, STAR_OUTPUTS.values())
-        shutil.rmtree(tmp_dir)
-
-    for local_path in s3_downloads.values():
-        remove_file_or_folder(local_path)
+        # Upload temp out directory to S3 with prefix
+        if prefix.startswith('s3://'):
+            upload_prefix(local_prefix, prefix, STAR_OUTPUTS.values())
+    finally:
+        if prefix.startswith('s3://'):
+            shutil.rmtree(tmp_dir)
+        for local_path in s3_downloads.values():
+            remove_file_or_folder(local_path)
 
 
 if __name__ == '__main__':

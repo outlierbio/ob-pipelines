@@ -198,23 +198,24 @@ def s3args(rm_local_outpath=False):
             # Swap the S3 path arguments for local temporary files/folders
             local_args, s3_downloads, s3_uploads = swap_args(args, rm_local_outpath=rm_local_outpath)
 
-            # Download inputs
-            logger.info('syncing from S3')
-            for s3_path, local_path in s3_downloads.items():
-                download_file_or_folder(s3_path, local_path)
+            try:
+                # Download inputs
+                logger.info('syncing from S3')
+                for s3_path, local_path in s3_downloads.items():
+                    download_file_or_folder(s3_path, local_path)
 
-            # Run command and save output
-            out = f(*local_args, **kwargs)
+                # Run command and save output
+                out = f(*local_args, **kwargs)
 
-            # Upload outputs
-            logger.info('uploading to S3')
-            for s3_path, local_path in s3_uploads.items():
-                upload_file_or_folder(s3_path, local_path)
-
-            # Remove local files
-            local_paths = list(s3_downloads.values()) + list(s3_uploads.values())
-            for local_path in local_paths:
-                remove_file_or_folder(local_path)
+                # Upload outputs
+                logger.info('uploading to S3')
+                for s3_path, local_path in s3_uploads.items():
+                    upload_file_or_folder(s3_path, local_path)
+            finally:
+                # Remove local files
+                local_paths = list(s3_downloads.values()) + list(s3_uploads.values())
+                for local_path in local_paths:
+                    remove_file_or_folder(local_path)
 
             return out
 
