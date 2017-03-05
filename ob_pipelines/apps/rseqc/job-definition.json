@@ -3,19 +3,12 @@
     "type": "container",
     "containerProperties": {
         "image": "outlierbio/rseqc",
-        "vcpus": 2,
-        "memory": 800,
+        "vcpus": 4,
+        "memory": 8000,
         "command": [
-            "geneBody_coverage.py",
-            "-r", "Ref::bedfile",
-            "-i", "Ref::input",
-            "-o", "Ref::output"
-        ],
-        "environment": [
-            {
-                "name": "SCRATCH_DIR",
-                "value": "/scratch"
-            }
+            "Ref::input",
+            "Ref::bedfile",
+            "Ref::output"
         ],
         "volumes": [
             {
@@ -23,6 +16,22 @@
                     "sourcePath": "/mnt/scratch"
                 },
                 "name": "scratch"
+            },
+            {
+                "host": {
+                    "sourcePath": "/mnt/reference"
+                },
+                "name": "reference"
+            }
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            },
+            {
+                "name": "REFERENCE_DIR",
+                "value": "/reference"
             }
         ],
         "mountPoints": [
@@ -30,6 +39,11 @@
                 "containerPath": "/scratch",
                 "readOnly": false,
                 "sourceVolume": "scratch"
+            },
+            {
+                "containerPath": "/reference",
+                "readOnly": true,
+                "sourceVolume": "reference"
             }
         ]
     }

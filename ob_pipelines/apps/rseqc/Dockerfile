@@ -9,13 +9,12 @@ RUN apt-get update && apt-get -y install \
 # AWS
 RUN pip install \
 	awscli \
-	boto3
+	boto3 \
+	click
 
 
 # Install RSeQC
 RUN pip install RSeQC
-ADD hg38.HouseKeepingGenes.bed /hg38.housekeeping.bed
-ADD hg19.HouseKeepingGenes.bed /hg19.housekeeping.bed
 
 VOLUME ["/scratch"]
 ENV SCRATCH_DIR=/scratch
@@ -23,6 +22,8 @@ VOLUME ["/reference"]
 ENV REFERENCE_DIR=/reference
 
 # ob-pipelines for common utils including s3wrap
-RUN pip install git+https://github.com/outlierbio/ob-pipelines
+RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
 
-ENTRYPOINT ["s3wrap"]
+ADD rseqc.py /
+
+ENTRYPOINT ["python", "/rseqc.py"]

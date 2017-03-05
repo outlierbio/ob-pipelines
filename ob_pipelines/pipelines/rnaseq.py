@@ -183,26 +183,30 @@ class GeneCoverage(PipelineTask, Sample):
     job_definition = 'gene-coverage'
     image = 'outlierbio/rseqc'
     command = [
-        'geneBody_coverage.py',
-        '-r', 'Ref::bedfile',
-        '-i', 'Ref::input', 
-        '-o', 'Ref::output'
+        'Ref::input',
+        'Ref::bedfile',
+        'Ref::output'
     ]
 
     @property
     def parameters(self):
         return {
-            'bedfile': '/hg38.housekeeping.bed',
-            'input': self.input()['bam'].path, 
-            'output': self.output().path
+            'bedfile': '/reference/rseqc/hg38.HouseKeepingGenes.bed',
+            'input': self.input()[0]['bam'].path,
+            'output': self.prefix()
         }
 
+    def prefix(self):
+        return 's3://{}/{}/rseqc/{}'.format(
+            S3_BUCKET, self.sample_folder, self.sample_id)
+
     def requires(self):
-        return Star(sample_id=self.sample_id)
+        return Star(sample_id=self.sample_id), IndexBam(sample_id=self.sample_id)
 
     def output(self):
-        return S3Target('s3://{}/{}/rseqc/geneBody_coverage.png'.format(
-            S3_BUCKET, self.sample_folder))
+        s3_paths = {k: v.format(prefix=self.prefix()) for k, v in GENE_COVERAGE_OUTPUTS.items()}
+        return {k: S3Target(path) for k, path in s3_paths.items()}
+
 
 
 class Kallisto(PipelineTask, Sample):
