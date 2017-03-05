@@ -20,20 +20,20 @@ def merge_column(input_files, labels, data_col='est_counts'):
     """
 
     # Grab annotations from the first file
-    fpath = input_files[0]
-    df = load_abundance_gencode(fpath)
-    annotations = df[['gencode_tx', 'gencode_gene', 'hugo_symbol', 'gene_type', 'length']]
+    first = input_files[0]
+    first_df = load_abundance_gencode(first)
+    annotations = first_df[['gencode_tx', 'gencode_gene', 'hugo_symbol', 'gene_type', 'length']]
 
     # Add the first file to the list
-    sample_col = df[data_col]
+    sample_col = first_df[data_col]
     sample_col.name = labels[0]
-    all_data = [df[data_col]]
+    all_data = [sample_col]
 
     # Loop to add the rest
     for i, fpath in enumerate(input_files[1:]):
-        sample_data = load_abundance_gencode(fpath)
-        sample_col = sample_data[data_col]
-        sample_col.name = labels[i]
+        sample_df = load_abundance_gencode(fpath)
+        sample_col = sample_df[data_col]
+        sample_col.name = labels[i + 1]
         all_data.append(sample_col)
 
     # Merge columns into a single matrix
@@ -41,8 +41,5 @@ def merge_column(input_files, labels, data_col='est_counts'):
 
     # Use transcript ID as index
     merged.index = annotations['gencode_tx']
-    
-    # Sort columns
-    merged = merged[sorted(merged.columns)]
 
     return annotations, merged
