@@ -10,6 +10,7 @@
             "-i", "Ref::index",
             "-o", "Ref::output",
             "-t", "20",
+            "-b", "100",
             "Ref::reads1", 
             "Ref::reads2"
         ],
