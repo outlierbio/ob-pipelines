@@ -23,12 +23,12 @@ s3_resource = boto3.resource('s3')
 SCRATCH_DIR = os.environ.get('SCRATCH_DIR') or '/tmp'
 
 
-def csv_to_s3(df, s3_path):
+def csv_to_s3(df, s3_path, **kwargs):
     """Write pandas DataFrame to S3 object"""
 
     # Write dataframe to buffer
     csv_buffer = StringIO()
-    df.to_csv(csv_buffer)
+    df.to_csv(csv_buffer, **kwargs)
 
     # Upload CSV to S3
     bucket, key = path_to_bucket_and_key(s3_path)

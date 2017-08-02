@@ -28,7 +28,7 @@ def get_index(tool, species='human', build='latest'):
         'kallisto': {
             'human': {
                 'test': '/reference/kallisto/gencode_v25.chr21/gencode_v25.chr21.idx',
-                'latest': '/reference/kallisto/gencode_v25/gencode_v25.idx'
+                'latest': '/reference/kallisto/gencode_v25/gencode.v25.ercc.idx'
             }
         }
     }
@@ -203,6 +203,7 @@ class Kallisto(PipelineTask, Sample):
 class MergeKallisto(Task):
 
     expt_id = Parameter()
+    annot = Parameter(False)
 
     def requires(self):
         return {
@@ -212,11 +213,13 @@ class MergeKallisto(Task):
 
     def output(self):
         prefix = 's3://{}/{}/'.format(S3_BUCKET, self.expt_id)
-        return {
-            'annotations': S3Target(prefix + 'annotations.csv'),
+        out_dict = {
             'est_counts': S3Target(prefix + 'est_counts.csv'),
             'tpm': S3Target(prefix + 'tpm.csv')
         }
+        if self.annot:
+            out_dict['annotations'] = S3Target(prefix + 'annotations.csv')
+        return out_dict
 
     def run(self):
         # Gather input filepaths and labels
@@ -225,10 +228,11 @@ class MergeKallisto(Task):
         fpaths = [tgt_dict[sample_id]['abundance'].path for sample_id in sample_ids]
 
         # Merge columns
-        annotations, est_counts = merge_column(fpaths, sample_ids, data_col='est_counts')
-        annotations, tpm = merge_column(fpaths, sample_ids, data_col='tpm')
+        annotations, est_counts = merge_column(fpaths, sample_ids, data_col='est_counts', annot=self.annot)
+        annotations, tpm = merge_column(fpaths, sample_ids, data_col='tpm', annot=self.annot)
 
-        csv_to_s3(annotations, self.output()['annotations'].path)
+        if self.annot:
+            csv_to_s3(annotations, self.output()['annotations'].path)
         csv_to_s3(est_counts, self.output()['est_counts'].path)
         csv_to_s3(tpm, self.output()['tpm'].path)
 
