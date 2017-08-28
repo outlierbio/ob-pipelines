@@ -1,7 +1,7 @@
 import logging
 import os
 
-logger = logging.getLogger('ob-pipelines')
+logger = logging.getLogger(__name__)
 
 # Create the format
 formatter = logging.Formatter('%(asctime)s - %(message)s')
