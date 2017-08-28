@@ -32,7 +32,9 @@ def csv_to_s3(df, s3_path, **kwargs):
 
     # Upload CSV to S3
     bucket, key = path_to_bucket_and_key(s3_path)
-    s3_resource.Object(bucket, key).put(Body=csv_buffer.getvalue())
+    s3_resource.Object(bucket, key).put(
+        Body=csv_buffer.getvalue(),
+        ExtraArgs={'ServerSideEncryption': 'AES256'})
 
 
 def create_tmp_from_key(key): 
@@ -88,7 +90,8 @@ def upload_folder(folder, bucket, prefix):
     for fname in os.listdir(folder):
         fpath = op.join(folder, fname)
         key = prefix + fname
-        s3.upload_file(fpath, bucket, key)
+        s3.upload_file(fpath, bucket, key,
+            ExtraArgs={'ServerSideEncryption': 'AES256'})
 
 
 def upload_prefix(local_prefix, s3_prefix, fpath_templates):
@@ -103,7 +106,8 @@ def upload_prefix(local_prefix, s3_prefix, fpath_templates):
     s3_fpaths = [fpath.format(prefix=s3_prefix) for fpath in fpath_templates]
     for local_fpath, s3_fpath in zip(local_fpaths, s3_fpaths):
         bucket, key = path_to_bucket_and_key(s3_fpath)
-        s3.upload_file(local_fpath, bucket, key)
+        s3.upload_file(local_fpath, bucket, key,
+            ExtraArgs={'ServerSideEncryption': 'AES256'})
 
 
 def download_file_or_folder(s3_path, local_path):
@@ -126,7 +130,8 @@ def upload_file_or_folder(s3_path, local_path):
     """Dispatch S3 upload depending on local path"""
     bucket, key = path_to_bucket_and_key(s3_path)
     if op.isfile(local_path):
-        s3.upload_file(local_path, bucket, key)
+        s3.upload_file(local_path, bucket, key,
+            ExtraArgs={'ServerSideEncryption': 'AES256'})
     elif op.isdir(local_path):
         upload_folder(local_path, bucket, key)
 
