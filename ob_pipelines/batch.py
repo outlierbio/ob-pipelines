@@ -51,22 +51,10 @@ from subprocess import check_output
 import time
 
 import luigi
-
-logger = logging.getLogger('luigi-interface')
+logger = logging.getLogger(__name__)
 
 try:
     import boto3
-    client = boto3.client('batch')
-
-    # Get dict of active queues keyed by name
-    queues = {q['jobQueueName']:q for q in client.describe_job_queues()['jobQueues']
-              if q['state'] == 'ENABLED' and q['status'] == 'VALID'}
-    if not queues:
-        logger.warning('No job queues with state=ENABLED and status=VALID')
-
-    # Pick the first queue as default
-    DEFAULT_QUEUE_NAME = list(queues.keys())[0]
-
 except ImportError:
     logger.warning('boto3 is not installed. BatchTasks require boto3')
 
@@ -78,99 +66,92 @@ class BatchJobException(Exception):
 POLL_TIME = 10
 
 
-def random_id():
-    return 'luigi-job-' + ''.join(random.sample(string.ascii_lowercase, 8))
+def _random_id():
+    return 'batch-job-' + ''.join(random.sample(string.ascii_lowercase, 8))
 
 
-def _get_job_status(job_id):
-    """
-    Retrieve task statuses from ECS API
+class BatchClient(object):
 
-    Returns list of {SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED} for each id in job_ids
-    """
-    response = client.describe_jobs(jobs=[job_id])
-
-    # Error checking
-    status_code = response['ResponseMetadata']['HTTPStatusCode']
-    if status_code != 200:
-        msg = 'Job status request received status code {0}:\n{1}'
-        raise Exception(msg.format(status_code, response))
-
-    return response['jobs'][0]['status']
-
-def _track_job(job_id):
-    """Poll task status until STOPPED"""
+    def __init__(self):
+        self._client = boto3.client('batch')
+        self._queue = self.get_active_queue()
     
-    while True:
-        status = _get_job_status(job_id)
-        if status in ['SUCCEEDED', 'FAILED']:
-            logger.info('Batch job {0} finished'.format(job_id))
-            return status
+    def get_active_queue(self):
+        """Get name of first active job queue"""
+        # Get dict of active queues keyed by name
+        queues = {q['jobQueueName']:q for q in self._client.describe_job_queues()['jobQueues']
+                  if q['state'] == 'ENABLED' and q['status'] == 'VALID'}
+        if not queues:
+            raise Exception('No job queues with state=ENABLED and status=VALID')
 
-        time.sleep(POLL_TIME)
-        logger.debug('Batch job status for job {0}: {1}'.format(
-            job_id, status))
+        # Pick the first queue as default
+        return list(queues.keys())[0]
 
+    def get_job_id_from_name(self, job_name):
+        # Job name is unique. If the job exists, use its id
+        jobs = self._client.list_jobs(jobQueue=self._queue, jobStatus='RUNNING')['jobSummaryList']
+        matching_jobs = [job for job in jobs if job['jobName'] == job_name]
+        if matching_jobs:
+            return matching_jobs[0]['jobId']
 
-def register_job_definition(json_fpath):
-    """Register a job definition with AWS Batch, using a JSON"""
-    with open(json_fpath) as f:
-        job_def = json.load(f)
-    response = client.register_job_definition(**job_def)
-    status_code = response['ResponseMetadata']['HTTPStatusCode']
-    if status_code != 200:
-        msg = 'Register job definition request received status code {0}:\n{1}'
-        raise Exception(msg.format(status_code, response))
-    return response
-
-
-class DockerTask(luigi.Task):
-
-    environment = {
-        'AWS_ACCESS_KEY_ID': os.environ.get('AWS_ACCESS_KEY_ID'),
-        'AWS_SECRET_ACCESS_KEY': os.environ.get('AWS_SECRET_ACCESS_KEY')
-    }
-    volumes = {'/tmp': '/scratch'}
-    image = ''
-    command = []
-
-    @property
-    def parameters(self):
+    def get_job_status(self, job_id):
         """
-        Parameters to pass to the command template
+        Retrieve task statuses from ECS API
 
-        Override to return a dict of key-value pairs to fill in command arguments
+        Returns list of {SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED} for each id in job_ids
         """
-        return {}
+        response = self._client.describe_jobs(jobs=[job_id])
 
-    def from_job_definition(self):
-        pass
+        # Error checking
+        status_code = response['ResponseMetadata']['HTTPStatusCode']
+        if status_code != 200:
+            msg = 'Job status request received status code {0}:\n{1}'
+            raise Exception(msg.format(status_code, response))
 
-    def build_batch_job_definition(self):
-        pass
+        return response['jobs'][0]['status']
 
-    def _build_command(self):
-        def get_param(arg):
-            return self.parameters[arg.split('::')[1]]
-        return [get_param(arg) if arg.startswith('Ref::') else arg 
-                for arg in self.command]
+    def submit_job(self, job_definition, parameters, job_name=None, queue=None):
+        # Use boto3 client directly since it's easy
+        if job_name is None:
+            job_name = _random_id()
+        response = self._client.submit_job(
+            jobName = job_name,
+            jobQueue = queue or self.get_active_queue(),
+            jobDefinition = job_definition,
+            parameters = parameters
+        )
+        return response['jobId']
 
-    def build_docker_run(self):
-        cmd = ['docker', 'run']
-        for name, value in self.environment.items():
-            cmd += ['-e', '{}={}'.format(name, value)]
-        for host, target in self.volumes.items(): 
-            cmd += ['-v', '{}:{}'.format(host, target)]
+    def wait_on_job(self, job_id):
+        """Poll task status until STOPPED"""
         
-        cmd.append(self.image)
+        while True:
+            status = self.get_job_status(job_id)
+            if status == 'SUCCEEDED':
+                logger.info('Batch job {} SUCCEEDED'.format(job_id))
+                return True
+            elif status == 'FAILED':
+                # Raise and notify if job failed
+                data = self._client.describe_jobs(jobs=[job_id])['jobs']
+                raise BatchJobException('Job {} failed: {}'.format(job_id, json.dumps(data, indent=4)))
 
-        command = self._build_command()
-        cmd += command
+            time.sleep(POLL_TIME)
+            logger.debug('Batch job status for job {0}: {1}'.format(
+                job_id, status))
 
-        return cmd
+    def register_job_definition(self, json_fpath):
+        """Register a job definition with AWS Batch, using a JSON"""
+        with open(json_fpath) as f:
+            job_def = json.load(f)
+        response = self._client.register_job_definition(**job_def)
+        status_code = response['ResponseMetadata']['HTTPStatusCode']
+        if status_code != 200:
+            msg = 'Register job definition request received status code {0}:\n{1}'
+            raise Exception(msg.format(status_code, response))
+        return response
 
 
-class BatchTask(DockerTask):
+class BatchTask(luigi.Task):
 
     """
     Base class for an Amazon Batch job
@@ -187,56 +168,7 @@ class BatchTask(DockerTask):
 
     """
 
-    job_definition = luigi.Parameter()
-    job_name = luigi.Parameter(default='', significant=False)
-    queue_name = luigi.Parameter(default='', significant=False)
-
-    @property
-    def batch_job_id(self):
-        """Expose the Batch job ID"""
-        if hasattr(self, '_job_id'):
-            return self._job_id
-
     def run(self):
-        if self.local:
-            self.run_local()
-            return
-
-        # Use default queue if none specified
-        queue_name = self.queue_name or DEFAULT_QUEUE_NAME
-
-        # Get jobId if it already exists
-        self._job_id = None
-        if self.job_name:
-            # Job name is unique. If the job exists, use its id
-            jobs = client.list_jobs(jobQueue=queue_name, jobStatus='RUNNING')['jobSummaryList']
-            matching_jobs = [job for job in jobs if job['jobName'] == self.job_name]
-            if matching_jobs:
-                self._job_id = matching_jobs[0]['jobId']
-
-
-        # Submit the job to AWS Batch if it doesn't exist, get assigned job ID
-        if not self._job_id:
-            response = client.submit_job(
-                jobName = self.job_name or random_id(),
-                jobQueue = queue_name,
-                jobDefinition = self.job_definition,
-                parameters = self.parameters
-            )
-            self._job_id = response['jobId']
-
-        # Wait on job completion
-        status = _track_job(self._job_id)
-
-        # Raise and notify if job failed
-        if status == 'FAILED':
-            data = client.describe_jobs(jobs=[self._job_id])['jobs']
-            raise BatchJobException('Job {}: {}'.format(self._job_id, json.dumps(data, indent=4)))
-
-    def run_local(self):
-        cmd = self.build_docker_run()
-        logger.info('Running local Docker command:\n{}'.format(' '.join(cmd)))
-        out = check_output(cmd)
-        logger.info(out.decode())
-
-
+        bc = BatchClient()
+        job_id = bc.submit_job(self.job_definition, self.parameters)
+        bc.wait_on_job(job_id)
