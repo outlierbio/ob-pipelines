@@ -7,15 +7,17 @@ setup(
     version='0.1',
     url='http://github.com/outlierbio/ob-pipelines',
     packages=find_packages(),
-    description='Bioinformatics apps (using Docker) and workflows (using Luigi) and Docker',
+    description='Bioinformatics apps (using Docker) and workflows (using Luigi)',
     include_package_data=True,
-    # install_requires=[
-    #     'boto3',
-    #     'click',
-    #     'luigi'
-#    ],
+    install_requires=[
+        'boto3',
+        'click',
+        'luigi',
+        'PyYAML'
+    ],
     entry_points='''
         [console_scripts]
         s3wrap=ob_pipelines.s3:s3wrap
+        ob-cluster=ob_pipelines.cluster:cli
     '''
 )
