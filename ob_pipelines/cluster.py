@@ -27,23 +27,40 @@ def build_launch_spec(cfg):
         ],
         'UserData': base64.b64encode('\n'.join([
             '#!/bin/bash',
-            'echo ECS_CLUSTER=%s >> /etc/ecs/ecs.config' % ecs_name,            
-            'if [ -b /dev/xvdm ] ;',
-            'then',
-            '    echo "first ps then stop docker"',
-            '    docker ps',
-            '    service docker stop',
-            '    mkdir -p /mnt',
-            '    mount /dev/xvdm /mnt',
-            '    mkdir -p /mnt/scratch',
-            '    echo "restart docker"',
-            '    service docker start',
-            'fi',
+            'echo ECS_CLUSTER=%s >> /etc/ecs/ecs.config' % ecs_name,
+
+            '# Stop Docker before mounting new drives',
+            'docker ps',
+            'service docker stop',
+
+            '# Mount ephemeral 0 and link to /scratch',
+            'mkdir -p /media/ephemeral0',
+            'mount /dev/xvdb /media/ephemeral0',
+            'mkdir -p /media/ephemeral0/scratch',
+            'chmod 777 /media/ephemeral0/scratch',
+            'ln --symbolic /media/ephemeral0/scratch /scratch',
+
+            '# Mount ephemeral 1 and link to /reference',
+            'mkdir -p /media/ephemeral1',
+            'mount /dev/xvdc /media/ephemeral1',
+            'mkdir -p /media/ephemeral1/reference',
+            'chmod 777 /media/ephemeral1/reference',
+            'ln --symbolic /media/ephemeral1/reference /reference',
+
+            '# Mount EBS',
+            'mkdir -p /media/ebs',
+            'mount /dev/xvdm /media/ebs',
+
+            '# Restart Docker',
+            'service docker start',
+
+            '# Sync reference data and copy to ephemeral',
             'sudo yum install -y python-pip',
             'sudo python-pip install awscli',
-            'aws s3 sync s3://outlierbio/reference/ /mnt/reference/'
+            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/ /mnt/reference/',
+            'cp -R /mnt/reference/ /reference/'
         ]).encode('ascii')).decode('ascii'),
-        'InstanceType': cfg['INSTANCE_TYPE'],
+        'InstanceType': 'c3.8xlarge',
         'BlockDeviceMappings': [
             {
                 'VirtualName': 'reference',
@@ -56,7 +73,15 @@ def build_launch_spec(cfg):
                     'Encrypted': False,
                     'Iops': 5000
                 }
-            }
+            },
+            {
+               "VirtualName" : "ephemeral0",
+               "DeviceName"  : "/dev/xvdb"
+            },
+            {
+               "VirtualName" : "ephemeral1",
+               "DeviceName"  : "/dev/xvdc",
+            },
         ],
         'Monitoring': {
             'Enabled': True
