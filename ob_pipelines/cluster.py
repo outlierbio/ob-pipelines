@@ -33,47 +33,32 @@ def build_launch_spec(cfg):
             'docker ps',
             'service docker stop',
 
-            '# Mount ephemeral 0 and link to /scratch',
-            'mkdir -p /media/ephemeral0',
-            'mount /dev/xvdb /media/ephemeral0',
+            '# Ephemeral 0 automatically mounted. Link to /scratch',
             'mkdir -p /media/ephemeral0/scratch',
             'chmod 777 /media/ephemeral0/scratch',
-            'ln --symbolic /media/ephemeral0/scratch /scratch',
+            'mkdir -p /mnt',
+            'ln --symbolic /media/ephemeral0/scratch /mnt/scratch',
 
             '# Mount ephemeral 1 and link to /reference',
             'mkdir -p /media/ephemeral1',
             'mount /dev/xvdc /media/ephemeral1',
             'mkdir -p /media/ephemeral1/reference',
             'chmod 777 /media/ephemeral1/reference',
-            'ln --symbolic /media/ephemeral1/reference /reference',
+            'ln --symbolic /media/ephemeral1/reference /mnt/reference',
 
-            '# Mount EBS',
-            'mkdir -p /media/ebs',
-            'mount /dev/xvdm /media/ebs',
+            
+            '# Sync reference data',
+            'sudo yum install -y python-pip',
+            'sudo python-pip install awscli',
+            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/star/ /mnt/reference/star/',
+            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/rseqc/ /mnt/reference/rseqc/',
+            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/kallisto/ /mnt/reference/kallisto/'
 
             '# Restart Docker',
             'service docker start',
-
-            '# Sync reference data and copy to ephemeral',
-            'sudo yum install -y python-pip',
-            'sudo python-pip install awscli',
-            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/ /mnt/reference/',
-            'cp -R /mnt/reference/ /reference/'
         ]).encode('ascii')).decode('ascii'),
         'InstanceType': 'c3.8xlarge',
         'BlockDeviceMappings': [
-            {
-                'VirtualName': 'reference',
-                'DeviceName': '/dev/xvdm',
-                'Ebs': {
-                    'SnapshotId': cfg['REFERENCE_SNAPSHOT'],
-                    'VolumeSize': 500,
-                    'DeleteOnTermination': True,
-                    'VolumeType': 'io1',
-                    'Encrypted': False,
-                    'Iops': 5000
-                }
-            },
             {
                "VirtualName" : "ephemeral0",
                "DeviceName"  : "/dev/xvdb"
@@ -89,8 +74,7 @@ def build_launch_spec(cfg):
         'SubnetId': ','.join(cfg['SUBNETS']),
         'IamInstanceProfile': {
             'Name': 'ecsInstanceRole',
-        },
-        'EbsOptimized': True
+        }
     }
 
 
