@@ -167,8 +167,10 @@ class BatchTask(luigi.Task):
             arn:aws:batch:<region>:<user_id>:job-definition/<job-name>:<version>
 
     """
+    job_name = None
 
     def run(self):
         bc = BatchClient()
-        job_id = bc.submit_job(self.job_definition, self.parameters)
+        job_id = bc.submit_job(self.job_definition, self.parameters,
+            job_name=self.job_name)
         bc.wait_on_job(job_id)
