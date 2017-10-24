@@ -34,7 +34,7 @@ def csv_to_s3(df, s3_path, **kwargs):
     bucket, key = path_to_bucket_and_key(s3_path)
     s3_resource.Object(bucket, key).put(
         Body=csv_buffer.getvalue(),
-        ExtraArgs={'ServerSideEncryption': 'AES256'})
+        ServerSideEncryption='AES256')
 
 
 def create_tmp_from_key(key): 
@@ -68,7 +68,7 @@ def key_exists(bucket, key):
             s3_resource.Object(bucket, key).load()
             return True
     except botocore.exceptions.ClientError as e:
-            return False
+        return False
 
 
 def download_folder(bucket, prefix, folder):
@@ -124,16 +124,16 @@ def download_file_or_folder(s3_path, local_path):
                 if key_exists(bucket, index_key):
                     s3.download_file(bucket, index_key, local_path + '.bai')
 
-
-
 def upload_file_or_folder(s3_path, local_path):
     """Dispatch S3 upload depending on local path"""
     bucket, key = path_to_bucket_and_key(s3_path)
     if op.isfile(local_path):
-        s3.upload_file(local_path, bucket, key,
-            ExtraArgs={'ServerSideEncryption': 'AES256'})
+        s3.upload_file(local_path, bucket, key, ExtraArgs={'ServerSideEncryption': 'AES256'})
     elif op.isdir(local_path):
-        upload_folder(local_path, bucket, key)
+        local_path = local_path if local_path.endswith('/') else local_path + '/'
+        s3_path = s3_path if s3_path.endswith('/') else s3_path + '/'
+        cmd = 'aws s3 sync --sse=AES256 {} {}'.format(local_path, s3_path)
+        check_output(cmd, shell=True)
 
 
 def remove_file_or_folder(fpath):
