@@ -48,14 +48,11 @@ def build_launch_spec(cfg):
 
             
             '# Sync reference data',
-            'sudo yum install -y python-pip',
-            'sudo python-pip install awscli',
-            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/star/ /mnt/reference/star/',
-            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/rseqc/ /mnt/reference/rseqc/',
-            '/usr/local/bin/aws s3 sync s3://outlierbio/reference/kallisto/ /mnt/reference/kallisto/'
-
+            'yum install -y python-pip',
+            'python-pip install awscli'
+        ] + cfg['STARTUP_CMDS'] + [
             '# Restart Docker',
-            'service docker start',
+            'service docker start'
         ]).encode('ascii')).decode('ascii'),
         'InstanceType': 'c3.8xlarge',
         'BlockDeviceMappings': [

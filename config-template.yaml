@@ -23,3 +23,6 @@ default:
     - 
     - 
     - 
+
+  STARTUP_CMDS:
+    - yum install nano
