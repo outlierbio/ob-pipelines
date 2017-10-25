@@ -12,7 +12,6 @@ RUN pip install \
 	boto3 \
 	click
 
-
 # Install RSeQC
 RUN pip install RSeQC
 
@@ -25,5 +24,4 @@ ENV REFERENCE_DIR=/reference
 RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
 
 ADD rseqc.py /
-
-ENTRYPOINT ["python", "/rseqc.py"]
+ADD ./read_distribution.sh /

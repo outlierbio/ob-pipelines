@@ -1,11 +1,13 @@
 {
-    "jobDefinitionName": "gene-coverage",
+    "jobDefinitionName": "read-distribution",
     "type": "container",
     "containerProperties": {
         "image": "outlierbio/rseqc",
-        "vcpus": 4,
-        "memory": 8000,
+        "vcpus": 2,
+        "memory": 16000,
         "command": [
+            "sh", 
+            "/read_distribution.sh",
             "Ref::input",
             "Ref::bedfile",
             "Ref::output"

@@ -10,7 +10,7 @@ from ob_pipelines.s3 import (
     swap_args, upload_prefix, download_file_or_folder, remove_file_or_folder, SCRATCH_DIR
 )
 
-logger = logging.getLogger('ob-pipelines')
+logger = logging.getLogger('__name__')
 
 GENE_COVERAGE_OUTPUTS = {
     'png': '{prefix}.geneBodyCoverage.curves.png',

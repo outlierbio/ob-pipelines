@@ -1,0 +1,51 @@
+{
+    "jobDefinitionName": "gene-coverage",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/rseqc",
+        "vcpus": 4,
+        "memory": 8000,
+        "command": [
+            "python", "/rseqc.py",
+            "Ref::input",
+            "Ref::bedfile",
+            "Ref::output"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            },
+            {
+                "host": {
+                    "sourcePath": "/mnt/reference"
+                },
+                "name": "reference"
+            }
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            },
+            {
+                "name": "REFERENCE_DIR",
+                "value": "/reference"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            },
+            {
+                "containerPath": "/reference",
+                "readOnly": true,
+                "sourceVolume": "reference"
+            }
+        ]
+    }
+}
