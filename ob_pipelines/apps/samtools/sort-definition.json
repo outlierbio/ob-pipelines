@@ -1,14 +1,18 @@
 {
-    "jobDefinitionName": "samtools-index",
+    "jobDefinitionName": "samtools-sort-by-name",
     "type": "container",
     "containerProperties": {
         "image": "outlierbio/samtools",
-        "vcpus": 2,
-        "memory": 800,
+        "vcpus": 8,
+        "memory": 50000,
         "command": [
-            "index",
-            "Ref::input",
-            "Ref::output"
+            "sort",
+            "-n",
+            "-m", "5G",
+            "-o", "Ref::output",
+            "-T", "Ref::tmp_prefix",
+            "-@", "8",
+            "Ref::input"
         ],
         "environment": [
             {
