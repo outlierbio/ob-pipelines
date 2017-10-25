@@ -1,4 +1,4 @@
-FROM centos:7.0.1406
+FROM centos:7.4.1708
 MAINTAINER Jake Feala <jake@outlierbio.com>
 
 # yum packages
@@ -13,7 +13,8 @@ RUN yum install -y \
     nano \
 	python-devel \
 	tar \
-	wget
+	wget \
+	zlib-devel
 
 # Miniconda 3 (from continuumio/miniconda3)
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
@@ -23,6 +24,7 @@ RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
 ENV PATH /opt/conda/bin:$PATH
 
 # Conda packages
+RUN conda install -y nomkl
 RUN conda install -y \
 	boto3 \
 	click \
