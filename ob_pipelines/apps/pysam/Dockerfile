@@ -8,8 +8,10 @@ RUN pip install \
 	click \
 	pysam
 
-RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
+VOLUME ["/scratch"]
+ENV SCRATCH_DIR=/scratch
+
+RUN pip install git+https://github.com/outlierbio/ob-pipelines
 
 ADD ./dedupe.py /src/
 
-	
