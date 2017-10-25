@@ -1,14 +1,10 @@
-import os.path as op
-
 from luigi.contrib.s3 import S3Target
 from luigi import Parameter, WrapperTask
 import luigi
 
-from ob_pipelines.apps.kallisto import merge_column
 from ob_pipelines.batch import BatchTask
 from ob_pipelines.config import cfg
 from ob_pipelines.sample import get_samples, Sample
-from ob_pipelines.s3 import csv_to_s3
 from ob_pipelines.pipelines.rnaseq import Star, SampleFastQ, FastQC
 
 class Skewer(BatchTask, Sample):
@@ -114,12 +110,6 @@ class Run(WrapperTask):
     expt_id = Parameter()
 
     def requires(self):
-        #for sample_id in get_samples(self.expt_id):
-            #yield FastQCTrimmed(sample_id=sample_id)
-            #yield BamToFastq(sample_id=sample_id)
-        
-        yield MergeERCC(expt_id=self.expt_id)
-
-
-if __name__ == '__main__':
-    luigi.run(local_scheduler=True)
+        for sample_id in get_samples(self.expt_id):
+            yield FastQCTrimmed(sample_id=sample_id)
+            yield BamToFastq(sample_id=sample_id)
