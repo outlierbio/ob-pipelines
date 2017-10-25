@@ -14,7 +14,7 @@ logger = logging.getLogger('ob-pipelines')
 
 
 STAR_OUTPUTS = {
-    'bam': '{prefix}Aligned.sortedByCoord.out.bam',
+    'bam': '{prefix}Aligned.out.bam',
     'junctions': '{prefix}SJ.out.tab',
     'unmapped_1': '{prefix}Unmapped.out.mate1',
     'unmapped_2': '{prefix}Unmapped.out.mate2',
@@ -64,7 +64,7 @@ def align(fq1, fq2, genome_dir, prefix, threads):
         '--outReadsUnmapped', 'Fastx',
         '--outSAMattributes', 'All',
         '--outSAMstrandField', 'intronMotif',
-        '--outSAMtype', 'BAM', 'SortedByCoordinate',
+        '--outSAMtype', 'BAM', 'Unsorted',
         '--outBAMcompression', '6'
     ]
 
