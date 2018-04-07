@@ -33,26 +33,28 @@ def build_launch_spec(cfg):
             'docker ps',
             'service docker stop',
 
-            '# Ephemeral 0 automatically mounted. Link to /scratch',
-            'mkdir -p /media/ephemeral0/scratch',
-            'chmod 777 /media/ephemeral0/scratch',
+            '# Combine ephemeral disks as RAID volume',
+            'yum install -y mdadm',
+            'umount /media/ephemeral0',
+            'yes | mdadm --create --verbose --auto=yes /dev/md0 --level=0 --raid-devices=2 /dev/xvdb /dev/xvdc',
+            'mkfs.ext4 /dev/md0',
+
+            '# Mount as /mnt and create scratch and reference folders',
             'mkdir -p /mnt',
-            'ln --symbolic /media/ephemeral0/scratch /mnt/scratch',
-
-            '# Mount ephemeral 1 and link to /reference',
-            'mkdir -p /media/ephemeral1',
-            'mount /dev/xvdc /media/ephemeral1',
-            'mkdir -p /media/ephemeral1/reference',
-            'chmod 777 /media/ephemeral1/reference',
-            'ln --symbolic /media/ephemeral1/reference /mnt/reference',
-
+            'mount /dev/md0 /mnt',
+            'mkdir /mnt/scratch',
+            'mkdir /mnt/reference',
+            'chmod 777 /mnt/scratch',
+            'chmod 777 /mnt/reference',
             
             '# Sync reference data',
             'yum install -y python-pip',
             'python-pip install awscli'
+
         ] + cfg['STARTUP_CMDS'] + [
             '# Restart Docker',
             'service docker start'
+
         ]).encode('ascii')).decode('ascii'),
         'InstanceType': 'c3.8xlarge',
         'BlockDeviceMappings': [
@@ -70,7 +72,7 @@ def build_launch_spec(cfg):
         },
         'SubnetId': ','.join(cfg['SUBNETS']),
         'IamInstanceProfile': {
-            'Name': 'ecsInstanceRole',
+            'Name': cfg['ECS_ROLE_NAME'],
         }
     }
 
