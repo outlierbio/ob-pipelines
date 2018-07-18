@@ -13,8 +13,15 @@ setup(
         'boto3',
         'click',
         'luigi',
-        'PyYAML'
+        'PyYAML',
+        'mongoengine'
     ],
+    extras_require={
+        'test': [
+            'pytest',
+            'mongomock'
+        ]
+    },
     entry_points='''
         [console_scripts]
         s3wrap=ob_pipelines.s3:s3wrap

@@ -1,4 +1,5 @@
 default:
+  DB_CONNECTION: mongodb://localhost/database_name
 
   RAW_BUCKET: s3://<your raw data bucket>
   S3_BUCKET: s3://<your processed data bucket>

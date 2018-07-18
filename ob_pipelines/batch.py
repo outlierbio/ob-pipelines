@@ -75,7 +75,7 @@ class BatchClient(object):
     def __init__(self):
         self._client = boto3.client('batch')
         self._queue = self.get_active_queue()
-    
+
     def get_active_queue(self):
         """Get name of first active job queue"""
         # Get dict of active queues keyed by name
@@ -124,7 +124,7 @@ class BatchClient(object):
 
     def wait_on_job(self, job_id):
         """Poll task status until STOPPED"""
-        
+
         while True:
             status = self.get_job_status(job_id)
             if status == 'SUCCEEDED':
@@ -172,5 +172,18 @@ class BatchTask(luigi.Task):
     def run(self):
         bc = BatchClient()
         job_id = bc.submit_job(self.job_definition, self.parameters,
-            job_name=self.job_name)
+                               job_name=self.job_name)
         bc.wait_on_job(job_id)
+
+
+class JobTask(luigi.Task):
+
+    @property
+    def db_task_id(self):
+        return getattr(self, "__task_id", None)
+
+    @db_task_id.setter
+    def db_task_id(self, value):
+        setattr(self, "__task_id", value)
+
+    job_id = luigi.parameter.Parameter()

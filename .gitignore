@@ -94,3 +94,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# jetbrains products
+.idea/
+.pytest_cache/
