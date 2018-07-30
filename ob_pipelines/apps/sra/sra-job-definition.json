@@ -1,0 +1,29 @@
+{
+    "jobDefinitionName": "sra",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/sra",
+        "vcpus": 32,
+        "memory": 50000,
+        "command": [
+            "Ref::srr_id",
+            "Ref::layout",
+            "Ref::outpath"
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            }
+        ]
+    }
+}
