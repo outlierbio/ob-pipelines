@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 S3_FOLDER=$1
 LOCAL_FOLDER=$SCRATCH/multiqc/$(dirname $S3_FOLDER)
 

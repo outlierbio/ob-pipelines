@@ -1,15 +1,18 @@
 FROM outlierbio/ob-pipelines
 
-RUN yum install -y ncurses ncurses-devel
+MAINTAINER Jake Feala <jake@outlierbio.com>
+
+ARG SAMTOOLS_VERSION=1.3
 
 # Install samtools
-ADD https://github.com/samtools/samtools/releases/download/1.3/samtools-1.3.tar.bz2 /
-RUN tar -xvjf samtools-1.3.tar.bz2 && \
-	cd /samtools-1.3 && \
-	make && \
-	chmod 777 /samtools-1.3/samtools && \
-	mv /samtools-1.3/samtools /usr/local/bin/
+ADD https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2 /
 
-RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
+RUN set -x && \
+    yum install -y ncurses ncurses-devel && \
+    tar -xvjf samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
+	cd /samtools-${SAMTOOLS_VERSION} && \
+	make && \
+	chmod 777 /samtools-${SAMTOOLS_VERSION}/samtools && \
+	mv /samtools-${SAMTOOLS_VERSION}/samtools /usr/local/bin/
 
 ADD *.sh /

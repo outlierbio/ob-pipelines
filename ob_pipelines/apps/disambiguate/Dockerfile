@@ -1,7 +1,8 @@
 FROM outlierbio/ob-pipelines
 
-RUN conda install -c bioconda ngs-disambiguate
+MAINTAINER Jake Feala <jake@outlierbio.com>
 
-RUN pip install git+https://github.com/outlierbio/ob-pipelines
+RUN set -x && \
+    conda install -c bioconda ngs-disambiguate
 
 ENTRYPOINT ["s3wrap", "-r", "ngs_disambiguate"]

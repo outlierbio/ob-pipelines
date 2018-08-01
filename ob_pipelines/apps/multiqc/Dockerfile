@@ -1,8 +1,10 @@
-FROM pipeline-base
+FROM outlierbio/ob-pipelines
+
 MAINTAINER Jake Feala <jake@outlierbio.com>
 
-RUN conda install -y -c bioconda nomkl
-RUN conda install -y -c bioconda multiqc
+RUN set -x && \
+    conda install -y -c bioconda nomkl && \
+    conda install -y -c bioconda multiqc
 
 ADD ./multiqc.sh /
 

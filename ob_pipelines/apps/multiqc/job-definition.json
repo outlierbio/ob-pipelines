@@ -2,7 +2,7 @@
     "jobDefinitionName": "multiqc",
     "type": "container",
     "containerProperties": {
-        "image": "596659486950.dkr.ecr.us-east-1.amazonaws.com/ngs/multiqc",
+        "image": "outlierbio/multiqc",
         "vcpus": 2,
         "memory": 8000,
         "command": [

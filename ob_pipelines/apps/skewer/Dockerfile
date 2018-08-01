@@ -1,9 +1,12 @@
 FROM outlierbio/ob-pipelines
 
-RUN wget -O skewer https://sourceforge.net/projects/skewer/files/Binaries/skewer-0.2.2-linux-x86_64/download && \
+MAINTAINER Jake Feala <jake@outlierbio.com>
+
+ARG SKEWER_VERSION=0.2.2
+
+RUN set -x && \
+    wget -O skewer https://sourceforge.net/projects/skewer/files/Binaries/skewer-${SKEWER_VERSION}-linux-x86_64/download && \
  	chmod 555 skewer && \
  	mv skewer /usr/local/bin
-
-RUN pip install git+https://github.com/outlierbio/ob-pipelines.git
 
 ENTRYPOINT ["s3wrap", "skewer"]
