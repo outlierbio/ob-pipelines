@@ -9,13 +9,14 @@ ENV REFERENCE_DIR=/reference
 
 RUN set -x && \
     # Install R
-    apt-get update && apt-get -y install r-base r-base-core r-recommended liblzo2-dev && \
+    apt-get -qqy update && apt-get -qqy install r-base r-base-core r-recommended liblzo2-dev && \
     # AWS
     pip install awscli boto3 click numpy && \
     # Install RSeQC
     pip install RSeQC && \
     # ob-pipelines for common utils including s3wrap
-    pip install git+https://github.com/outlierbio/ob-pipelines.git
-
+    pip install git+https://github.com/outlierbio/ob-pipelines.git && \
+	apt-get -qqy autoremove && apt-get -qqy clean
+	
 ADD rseqc.py /
 ADD ./read_distribution.sh /

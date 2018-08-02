@@ -13,6 +13,7 @@ RUN set -x && \
 	cd /samtools-${SAMTOOLS_VERSION} && \
 	make && \
 	chmod 777 /samtools-${SAMTOOLS_VERSION}/samtools && \
-	mv /samtools-${SAMTOOLS_VERSION}/samtools /usr/local/bin/
+	mv /samtools-${SAMTOOLS_VERSION}/samtools /usr/local/bin/ && \
+	yum clean all
 
 ADD *.sh /

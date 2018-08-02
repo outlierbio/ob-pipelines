@@ -10,10 +10,10 @@ ADD https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}
 VOLUME ["/scratch"]
 ENV SCRATCH_DIR=/scratch
 
-
 RUN set -x && \
-    apt-get update && apt-get install -y python-pip && \
+    apt-get -qqy update && apt-get install -qqy python-pip && \
     pip install awscli boto3 && \
-    pip install git+https://github.com/outlierbio/ob-pipelines
+    pip install git+https://github.com/outlierbio/ob-pipelines && \
+    apt-get -qqy autoremove && apt-get -qqy clean
 
 ADD ./bam2fastq.sh /

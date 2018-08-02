@@ -16,7 +16,8 @@ RUN set -x && \
 	./configure --prefix=/root/meme --with-url=http://meme-suite.org \
 		--enable-build-libxml2 --enable-build-libxslt && \
 	make && \
-	make install
+	make install && \
+	yum clean all
 
 ENV PATH /root/meme/bin:$PATH
 

@@ -13,8 +13,7 @@ ENV LANG en_US.utf-8
 
 # yum packages
 RUN set -x && \
-    yum -y update && \
-    yum install -y bzip2 bzip2-devel ca-certificates gcc gcc-c++ git make \
+    yum -y update && yum install -y bzip2 bzip2-devel ca-certificates gcc gcc-c++ git make \
     nano python-devel python-setuptools python-setuptools-devel tar wget zlib-devel && \
     easy_install pip  && \
     # pip packages
@@ -24,7 +23,8 @@ RUN set -x && \
     echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
     wget --quiet https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh
+    rm ~/miniconda.sh && \
+	yum clean all
 
 ENV PATH /opt/conda/bin:$PATH
 
