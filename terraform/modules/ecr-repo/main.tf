@@ -16,50 +16,50 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-data "aws_iam_policy_document" "login" {
-  statement {
-    sid     = "ECRGetAuthorizationToken"
-    effect  = "Allow"
-    actions = ["ecr:GetAuthorizationToken"]
+#data "aws_iam_policy_document" "login" {
+#  statement {
+#    sid     = "ECRGetAuthorizationToken"
+#    effect  = "Allow"
+#    actions = ["ecr:GetAuthorizationToken"]
+#
+#    resources = ["*"]
+#  }
+#}
 
-    resources = ["*"]
-  }
-}
+#data "aws_iam_policy_document" "write" {
+#  statement {
+#    sid    = "ECRGetAuthorizationToken"
+#    effect = "Allow"
+#
+#    actions = [
+#      "ecr:InitiateLayerUpload",
+#      "ecr:UploadLayerPart",
+#      "ecr:CompleteLayerUpload",
+#      "ecr:PutImage",
+#    ]
+#
+#    resources = ["${aws_ecr_repository.default.arn}"]
+#  }
+#}
 
-data "aws_iam_policy_document" "write" {
-  statement {
-    sid    = "ECRGetAuthorizationToken"
-    effect = "Allow"
-
-    actions = [
-      "ecr:InitiateLayerUpload",
-      "ecr:UploadLayerPart",
-      "ecr:CompleteLayerUpload",
-      "ecr:PutImage",
-    ]
-
-    resources = ["${aws_ecr_repository.default.arn}"]
-  }
-}
-
-data "aws_iam_policy_document" "read" {
-  statement {
-    sid    = "ECRGetAuthorizationToken"
-    effect = "Allow"
-
-    actions = [
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:GetRepositoryPolicy",
-      "ecr:DescribeRepositories",
-      "ecr:ListImages",
-      "ecr:DescribeImages",
-      "ecr:BatchGetImage",
-    ]
-
-    resources = ["${aws_ecr_repository.default.arn}"]
-  }
-}
+#data "aws_iam_policy_document" "read" {
+#  statement {
+#    sid    = "ECRGetAuthorizationToken"
+#    effect = "Allow"
+#
+#    actions = [
+#      "ecr:BatchCheckLayerAvailability",
+#      "ecr:GetDownloadUrlForLayer",
+#      "ecr:GetRepositoryPolicy",
+#      "ecr:DescribeRepositories",
+#      "ecr:ListImages",
+#      "ecr:DescribeImages",
+#      "ecr:BatchGetImage",
+#    ]
+#
+#    resources = ["${aws_ecr_repository.default.arn}"]
+#  }
+#}
 
 data "aws_iam_policy_document" "default_ecr" {
   count = "${signum(length(var.roles)) == 1 ? 0 : 1}"
@@ -139,45 +139,45 @@ resource "aws_ecr_repository_policy" "default_ecr" {
   policy     = "${data.aws_iam_policy_document.default_ecr.json}"
 }
 
-resource "aws_iam_policy" "login" {
-  name        = "ecr-repo-${var.name}${var.delimiter}login"
-  description = "Allow IAM Users to call ecr:GetAuthorizationToken"
-  policy      = "${data.aws_iam_policy_document.login.json}"
-}
+#resource "aws_iam_policy" "login" {
+#  name        = "ecr-repo-${replace(var.name, "/", "-")}${var.delimiter}login"
+#  description = "Allow IAM Users to call ecr:GetAuthorizationToken"
+#  policy      = "${data.aws_iam_policy_document.login.json}"
+#}
 
-resource "aws_iam_policy" "read" {
-  name        = "ecr-repo-${var.name}${var.delimiter}read"
-  description = "Allow IAM Users to push into ECR"
-  policy      = "${data.aws_iam_policy_document.read.json}"
-}
+#resource "aws_iam_policy" "read" {
+#  name        = "ecr-repo-${replace(var.name, "/", "-")}${var.delimiter}read"
+#  description = "Allow IAM Users to push into ECR"
+#  policy      = "${data.aws_iam_policy_document.read.json}"
+#}
 
-resource "aws_iam_policy" "write" {
-  name        = "ecr-repo-${var.name}${var.delimiter}write"
-  description = "Allow IAM Users to pull from ECR"
-  policy      = "${data.aws_iam_policy_document.write.json}"
-}
+#resource "aws_iam_policy" "write" {
+#  name        = "ecr-repo-${replace(var.name, "/", "-")}${var.delimiter}write"
+#  description = "Allow IAM Users to pull from ECR"
+#  policy      = "${data.aws_iam_policy_document.write.json}"
+#}
 
 resource "aws_iam_role" "default" {
   count              = "${signum(length(var.roles)) == 1 ? 0 : 1}"
-  name               = "${var.name}"
+  name               = "${replace(var.name, "/", "-")}"
   assume_role_policy = "${data.aws_iam_policy_document.assume_role.json}"
 }
 
-resource "aws_iam_role_policy_attachment" "default_ecr" {
-  count      = "${signum(length(var.roles)) == 1 ? 0 : 1}"
-  role       = "${aws_iam_role.default.name}"
-  policy_arn = "${aws_iam_policy.login.arn}"
-}
+#resource "aws_iam_role_policy_attachment" "default_ecr" {
+#  count      = "${signum(length(var.roles)) == 1 ? 0 : 1}"
+#  role       = "${aws_iam_role.default.name}"
+#  policy_arn = "${aws_iam_policy.login.arn}"
+#}
 
-resource "aws_iam_role_policy_attachment" "default" {
-  count      = "${signum(length(var.roles)) == 1 ? length(var.roles) : 0}"
-  role       = "${element(var.roles, count.index)}"
-  policy_arn = "${aws_iam_policy.login.arn}"
-}
+#resource "aws_iam_role_policy_attachment" "default" {
+#  count      = "${signum(length(var.roles)) == 1 ? length(var.roles) : 0}"
+#  role       = "${element(var.roles, count.index)}"
+#  policy_arn = "${aws_iam_policy.login.arn}"
+#}
 
 resource "aws_iam_instance_profile" "default" {
   count = "${signum(length(var.roles)) == 1 ? 0 : 1}"
-  name  = "${var.name}"
+  name  = "${replace(var.name, "/", "-")}"
   role  = "${aws_iam_role.default.name}"
 }
 
