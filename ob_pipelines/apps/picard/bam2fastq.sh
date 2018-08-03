@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 BAM=$1
 OUT1=$2
 OUT2=$3

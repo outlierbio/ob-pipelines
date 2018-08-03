@@ -1,9 +1,11 @@
-FROM pipeline-base
+FROM outlierbio/ob-pipelines
+
 MAINTAINER Jake Feala <jake@outlierbio.com>
 
-RUN conda install -y -c bioconda nomkl
-RUN conda install -y -c bioconda htseq
+RUN set -x && \
+    conda install -y -c bioconda nomkl && \
+    conda install -y -c bioconda htseq
 
-ADD ./htseq.sh /
+ADD htseq.sh /
 
 ENTRYPOINT ["sh", "/htseq.sh"]

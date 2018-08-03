@@ -1,19 +1,24 @@
 FROM openjdk:8
 
-RUN apt-get update && apt-get install -y python-pip
-RUN pip install boto3 click
+MAINTAINER Jake Feala <jake@outlierbio.com>
 
-# Install FastQC
-RUN wget http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip -O /fastqc_v0.11.5.zip && \
-	unzip /fastqc_v0.11.5.zip && \
-	chmod 777 /FastQC/fastqc
-ENV PATH /FastQC:$PATH
+ARG FASTQC_VERSION=0.11.5
 
 VOLUME ["/scratch"]
 ENV SCRATCH_DIR=/scratch
 
-RUN pip install git+https://github.com/outlierbio/ob-pipelines
+RUN set -x && \
+    apt-get update && apt-get install -y python-pip && \
+    pip install boto3 click && \
+    # Install FastQC
+    wget -q http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip -O /fastqc_v${FASTQC_VERSION}.zip && \
+	unzip /fastqc_v${FASTQC_VERSION}.zip && \
+	chmod 777 /FastQC/fastqc && \
+	pip install git+https://github.com/outlierbio/ob-pipelines && \
+	apt-get -qqy autoremove && apt-get -qqy clean
 
-ADD ./fastqc.py /
+ENV PATH /FastQC:$PATH
+
+ADD fastqc.py /
 
 ENTRYPOINT ["python", "/fastqc.py"]
