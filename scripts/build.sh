@@ -10,6 +10,7 @@ SAMTOOLS_VERSION=1.3
 SKEWER_VERSION=0.2.2
 STAR_VERSION=2.5.0b
 SUBREAD_VERSION=1.6.2
+GDC_VERSION=1.3.0
 
 docker build --no-cache -t outlierbio/ob-pipelines $REPO_DIR --build-arg MINICONDA_VERSION=${MINICONDA_VERSION}
 docker build --no-cache -t outlierbio/bwa $REPO_DIR/ob_pipelines/apps/bwa
@@ -27,6 +28,7 @@ docker build --no-cache -t outlierbio/samtools $REPO_DIR/ob_pipelines/apps/samto
 docker build --no-cache -t outlierbio/skewer $REPO_DIR/ob_pipelines/apps/skewer --build-arg SKEWER_VERSION=${SKEWER_VERSION}
 docker build --no-cache -t outlierbio/star $REPO_DIR/ob_pipelines/apps/star --build-arg STAR_VERSION=${STAR_VERSION}
 docker build --no-cache -t outlierbio/subread $REPO_DIR/ob_pipelines/apps/subread --build-arg SUBREAD_VERSION=${SUBREAD_VERSION}
+docker build --no-cache -t outlierbio/gdc $REPO_DIR/ob_pipelines/apps/gdc --build-arg GDC_VERSION=${GDC_VERSION}
 
 
 docker push outlierbio/ob-pipelines
@@ -45,3 +47,4 @@ docker push outlierbio/samtools
 docker push outlierbio/skewer
 docker push outlierbio/star
 docker push outlierbio/subread
+docker push outlierbio/gdc

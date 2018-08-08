@@ -2,7 +2,8 @@ FROM centos:latest
 
 RUN yum update -y && yum install -y \
 	bzip2 \
-	wget
+	wget \
+	md5sum
 
 # Miniconda
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
