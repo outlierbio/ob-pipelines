@@ -2,6 +2,11 @@ FROM centos:latest
 
 MAINTAINER Jake Feala <jake@outlierbio.com>
 
+RUN yum update -y && yum install -y \
+	bzip2 \
+	wget \
+	md5sum
+
 ARG MINICONDA_VERSION=latest
 ARG SRA_VERSION=current
 
