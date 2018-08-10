@@ -5,7 +5,7 @@ from ob_pipelines.apps.star import STAR_OUTPUTS
 from ob_pipelines.batch import BatchTask, LoggingTaskWrapper
 from ob_pipelines.config import cfg
 from ob_pipelines.entities.sample import Sample
-from ob_pipelines.pipelines.rnaseq.rnaseq import get_index
+from ob_pipelines.pipelines.rnaseq.index import get_index
 from ob_pipelines.tasks.sample_fastq import SampleFastQ
 
 

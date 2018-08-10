@@ -23,7 +23,9 @@ class FastQC(BatchTask, LoggingTaskWrapper, Sample):
             'html_2': self.sample_id + '_2_fastqc.html',
             'zip_2': self.sample_id + '_2_fastqc.zip'
         }
-        return {k: S3Target('{}/{}/fastqc/{}'.format(cfg['S3_BUCKET'], self.sample_folder, fname))
+        return {k: S3Target(
+            '{bucket}/{sample}/fastqc/{folder_name}'.format(bucket=cfg['S3_BUCKET'], sample=self.sample_folder,
+                                                            folder_name=fname))
                 for k, fname in s3_paths.items()}
 
     @property

@@ -21,6 +21,7 @@ class Sample(object):
         else:
             self._created_at = datetime.utcnow()
 
+
     @property
     def sample(self):
         # TODO: remove fallback init
@@ -30,17 +31,17 @@ class Sample(object):
         return self._sample
 
     @property
-    def sample_folder(self):
+    def sample_folder(self) -> str:
         return '{expt}/{sample}'.format(
             bucket=cfg['S3_BUCKET'],
-            expt=self._experiment.name,
+            expt=self.experiment.name,
             sample=self.sample_id)
 
     @property
     def experiment(self):
         # TODO: remove fallback init
         if not hasattr(self, '_experiment'):
-            expt_key = self.sample['Experiment'][0]
+            expt_key = self.sample.sample['Experiment'][0]
             from ob_pipelines.entities.persistence import get_experiment_by_key
             self._experiment = get_experiment_by_key(expt_key)
         return self._experiment
