@@ -8,6 +8,7 @@ KALISTO_VERSION=0.44.0
 PICARD_VERSION=2.8.3
 SAMTOOLS_VERSION=1.3
 SKEWER_VERSION=0.2.2
+SRA_VERSION=2.8.2-1
 STAR_VERSION=2.5.0b
 SUBREAD_VERSION=1.6.2
 
@@ -25,6 +26,7 @@ docker build --no-cache -t outlierbio/pysam $REPO_DIR/ob_pipelines/apps/pysam
 docker build --no-cache -t outlierbio/rseqc $REPO_DIR/ob_pipelines/apps/rseqc
 docker build --no-cache -t outlierbio/samtools $REPO_DIR/ob_pipelines/apps/samtools --build-arg SAMTOOLS_VERSION=${SAMTOOLS_VERSION}
 docker build --no-cache -t outlierbio/skewer $REPO_DIR/ob_pipelines/apps/skewer --build-arg SKEWER_VERSION=${SKEWER_VERSION}
+docker build --no-cache -t outlierbio/sra $REPO_DIR/ob_pipelines/apps/sra --build-arg MINICONDA_VERSION=${MINICONDA_VERSION} --build-arg SRA_VERSION=${SRA_VERSION}
 docker build --no-cache -t outlierbio/star $REPO_DIR/ob_pipelines/apps/star --build-arg STAR_VERSION=${STAR_VERSION}
 docker build --no-cache -t outlierbio/subread $REPO_DIR/ob_pipelines/apps/subread --build-arg SUBREAD_VERSION=${SUBREAD_VERSION}
 
@@ -43,5 +45,6 @@ docker push outlierbio/pysam
 docker push outlierbio/rseqc
 docker push outlierbio/samtools
 docker push outlierbio/skewer
+docker push outlierbio/sra
 docker push outlierbio/star
 docker push outlierbio/subread

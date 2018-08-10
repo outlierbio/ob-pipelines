@@ -1,12 +1,11 @@
 import os.path as op
 
-import luigi
 from luigi.contrib.s3 import S3Target
 
-from ob_pipelines.config import cfg
 from ob_pipelines.batch import BatchTask
-from ob_pipelines.sample import Sample
-from ob_pipelines.apps.sra.task import SRADownload
+from ob_pipelines.config import cfg
+from ob_pipelines.entities.sample import Sample
+from ob_pipelines.tasks.sra_download import SRADownload
 
 
 class FastQC(BatchTask, Sample):

@@ -1,9 +1,10 @@
 import luigi
 from luigi.contrib.s3 import S3Target
-from ob_pipelines.batch import BatchTask
+
+from ob_pipelines.batch import BatchTask, LoggingTaskWrapper
 
 
-class SRADownload(BatchTask):
+class SRADownload(BatchTask, LoggingTaskWrapper):
 
     """Download from SRA on AWS Batch"""
 

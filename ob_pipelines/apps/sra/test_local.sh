@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 SCRATCH_DIR=~/Desktop/scratch
 
 image=outlierbio/sra

@@ -13,13 +13,11 @@ setup(
         'boto3',
         'click',
         'luigi',
-        'PyYAML',
-        'mongoengine'
+        'PyYAML'
     ],
     extras_require={
         'test': [
-            'pytest',
-            'mongomock'
+            'pytest'
         ]
     },
     entry_points='''

@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 srr=$1
 layout=$2
 s3_outpath=$3

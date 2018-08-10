@@ -43,14 +43,13 @@ Written and maintained by Jake Feala (@jfeala) for Outlier Bio (@outlierbio)
 """
 
 import json
-import os
 import logging
 import random
 import string
-from subprocess import check_output
 import time
 
 import luigi
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -79,7 +78,7 @@ class BatchClient(object):
     def get_active_queue(self):
         """Get name of first active job queue"""
         # Get dict of active queues keyed by name
-        queues = {q['jobQueueName']:q for q in self._client.describe_job_queues()['jobQueues']
+        queues = {q['jobQueueName']: q for q in self._client.describe_job_queues()['jobQueues']
                   if q['state'] == 'ENABLED' and q['status'] == 'VALID'}
         if not queues:
             raise Exception('No job queues with state=ENABLED and status=VALID')
@@ -115,10 +114,10 @@ class BatchClient(object):
         if job_name is None:
             job_name = _random_id()
         response = self._client.submit_job(
-            jobName = job_name,
-            jobQueue = queue or self.get_active_queue(),
-            jobDefinition = job_definition,
-            parameters = parameters
+            jobName=job_name,
+            jobQueue=queue or self.get_active_queue(),
+            jobDefinition=job_definition,
+            parameters=parameters
         )
         return response['jobId']
 
@@ -152,7 +151,6 @@ class BatchClient(object):
 
 
 class BatchTask(luigi.Task):
-
     """
     Base class for an Amazon Batch job
 
@@ -176,14 +174,12 @@ class BatchTask(luigi.Task):
         bc.wait_on_job(job_id)
 
 
-class JobTask(luigi.Task):
+class LoggingTaskWrapper(luigi.Task):
 
     @property
-    def db_task_id(self):
-        return getattr(self, "__task_id", None)
+    def task_key(self):
+        return getattr(self, "__task_key", None)
 
-    @db_task_id.setter
-    def db_task_id(self, value):
-        setattr(self, "__task_id", value)
-
-    job_id = luigi.parameter.Parameter()
+    @task_key.setter
+    def task_key(self, value):
+        setattr(self, "__task_key", value)
