@@ -80,3 +80,7 @@ class Task(object):
     @completed_at.setter
     def completed_at(self, value):
         self._completed_at = value
+
+    @exception.setter
+    def exception(self, value):
+        self._exception = value

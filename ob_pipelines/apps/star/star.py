@@ -1,7 +1,7 @@
-import os.path as op
 import logging
+import os.path as op
 import shutil
-from subprocess import check_output
+import subprocess
 from tempfile import mkdtemp
 
 import click
@@ -79,8 +79,12 @@ def align(fq1, fq2, genome_dir, prefix, threads):
 
         # Run command and save output
         logging.info('Running:\n{}'.format(' '.join(cmd)))
-        out = check_output(local_args)
-        logging.info(out.decode())
+        try:
+            out = subprocess.check_output(local_args, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+        except subprocess.CalledProcessError as exc:
+            logging.info("Status : FAIL", exc.returncode, exc.output)
+        else:
+            logging.info(out)
 
         # Upload temp out directory to S3 with prefix
         if prefix.startswith('s3://'):

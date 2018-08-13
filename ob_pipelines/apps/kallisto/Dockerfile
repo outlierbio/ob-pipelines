@@ -10,7 +10,7 @@ VOLUME ["/reference"]
 ENV REFERENCE_DIR=/reference
 
 RUN set -x && \
-    pip install awscli boto3 && \
+    pip install awscli boto3 git+https://github.com/outlierbio/ob-pipelines && \
     wget https://github.com/pachterlab/kallisto/releases/download/v${KALISTO_VERSION}/kallisto_linux-v${KALISTO_VERSION}.tar.gz && \
     tar -xvf kallisto_linux-v${KALISTO_VERSION}.tar.gz && \
     cp kallisto_linux-v${KALISTO_VERSION}/kallisto /usr/local/bin

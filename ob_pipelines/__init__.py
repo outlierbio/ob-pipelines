@@ -1,6 +1,5 @@
 import logging
 import os
-import traceback
 from datetime import datetime
 
 import luigi
@@ -40,9 +39,9 @@ def luigi_task_success(luigi_task: LoggingTaskWrapper):
 
 
 @LoggingTaskWrapper.event_handler(luigi.event.Event.FAILURE)
-def luigi_task_failure(luigi_task: LoggingTaskWrapper):
+def luigi_task_failure(luigi_task: LoggingTaskWrapper, exception):
     task = get_task_by_key(luigi_task.task_key)
     task.completed_at = datetime.utcnow().isoformat()
     task.status = 'failed'
-    task.exception = traceback.format_exc()
+    task.exception = str(exception)
     update_task(task)
