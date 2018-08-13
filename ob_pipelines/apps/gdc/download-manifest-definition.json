@@ -8,7 +8,9 @@
         "command": [
             "sh",
             "/dl-manifest.sh",
+            "Ref::download_id",
             "Ref::manifest_file",
+            "Ref::outpath",
             "Ref::token_file"
         ],
         "environment": [
