@@ -84,10 +84,17 @@ Your folder structure should look like following:
 └── ...
 ```
 
+### Tasks
+
+* `BatchTask` - basic task for the pipeline, a wrapper for Luigi's Task class
+
+#### Download tasks
+* `SRADownload` - downloads data from NCBI
+* `GDCDownload` - downloads BAM and FASTQ files from https://gdc.cancer.gov. A client supports validation of downloaded data with using MD5 from files' annotation from the site. Annotations are optional and the toold doesn't guarantee that all files will be verified
+
 #### Testing 
 If you have issues running test please try following `python3 -m pytest -sv test/local/`
 
 ### Contributing
 
 If you would like to contribute please check our [Contribution guide](CONTRIBUTING.md)
-
