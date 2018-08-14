@@ -59,6 +59,7 @@ def gene_coverage(bam, ref, prefix):
             out = subprocess.check_output(local_args, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         except subprocess.CalledProcessError as exc:
             logging.info("Status : FAIL", exc.returncode, exc.output)
+            raise exc
         else:
             logging.info(out)
 
