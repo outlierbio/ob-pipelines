@@ -8,8 +8,9 @@
         "command": [
             "sh",
             "/dl-uuids.sh",
-            "Ref::uuids",
-            "Ref::token_file"
+            "Ref::download_id",
+            "Ref::outpath",
+            "Ref::uuids"
         ],
         "environment": [
             {

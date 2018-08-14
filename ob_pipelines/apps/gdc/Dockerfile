@@ -8,6 +8,9 @@ ENV SCRATCH_DIR=/scratch
 ARG GDC_VERSION=1.3.0
 
 RUN set -x && \
+    yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
+    yum update -y && yum install -y python-wheel && yum install -y python-pip python-wheel && \
+    pip install awscli boto3 && \
     mkdir gdc-client && \
     cd /gdc-client && \
     yum update -y && yum install -y wget unzip && \
