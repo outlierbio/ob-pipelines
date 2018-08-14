@@ -1,3 +1,9 @@
+#
+# This is an example Terraform file that spins up the complete ECS cluster
+# Please use it if you need to spin up the separate ECS cluster withour connecting it to AWS Batch.
+# For AWS Batch example please see batch.tf file in this folder
+#
+
 #locals {
 #  name        = "ecs"
 #  environment = "outlier-bio"
