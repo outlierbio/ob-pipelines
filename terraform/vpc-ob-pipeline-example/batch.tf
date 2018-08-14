@@ -3,9 +3,10 @@ locals {
   # This is the convention we use to know what belongs to each other
   batch_resources_name = "outlier-bio-batch-ecs"
   
-  # The names of resources that will be created
-  batch_ecs_instance_profile = "batch-ecs-instance-profile"
-  batch_compute_env_name = "test-env" 
+  # The prefix for names of ECS resources that will be created
+  batch_ecs_instance_profile = "outlier-bio"
+
+  batch_compute_env_name = "test-env"
   batch_queue_name = "test-queue"
 }
 
@@ -24,18 +25,36 @@ resource "aws_iam_policy" "iam_policy_batch_ecr_role_grant_s3_access" {
     "Sid": "S3ReadAccessForSourceBucket",
     "Effect": "Allow",
     "Action": [
+       "s3:GetBucketLocation",
+       "s3:ListAllMyBuckets",
        "s3:GetObject",
-       "s3:GetObjectAcl"
+       "s3:GetObjectAcl",
+       "s3:PutObject",
+       "s3:PutObjectAcl",
+       "s3:DeleteObject"
     ],
     "Resource": [ "${data.aws_s3_bucket.source_bucket.arn}" ]
+  }, {
+    "Sid": "S3RWAccessForTargetBucket",
+    "Effect": "Allow",
+    "Action": [
+       "s3:GetBucketLocation",
+       "s3:ListAllMyBuckets",
+       "s3:GetObject",
+       "s3:GetObjectAcl",
+       "s3:PutObject",
+       "s3:PutObjectAcl",
+       "s3:DeleteObject"
+    ],
+    "Resource": [ "${aws_s3_bucket.target_bucket.arn}" ]
   }]
 }
 EOF
 }
 
-resource "aws_iam_policy_attachment" "iam_policy_batch_ecr_role_grant_s3_access-attachment" {
-  name       = "lambda-sns-alerts-policy-attachment"
-  roles      = [ "${module.ecs-instance-profile.instance_profile_name}" ]
+resource "aws_iam_policy_attachment" "iam_policy_batch_ecr_role_grant_s3_access_attachment" {
+  name       = "iam-policy-batch-ecr-role-grant-s3-access-attachment"
+  roles      = [ "${module.ecs-instance-profile.instance_role_name}" ]
   policy_arn = "${aws_iam_policy.iam_policy_batch_ecr_role_grant_s3_access.arn}"
 }
 
@@ -83,7 +102,7 @@ module "autoscaling" "ecs_instances" {
   health_check_type         = "EC2"
   min_size                  = 0
   max_size                  = 1
-  desired_capacity          = 0 # Please set to 1 and re-apply when you need to start Luigi!
+  desired_capacity          = 1 # Please set to 1 and re-apply when you need to start Luigi
   wait_for_capacity_timeout = 0
 
   tags = [{
