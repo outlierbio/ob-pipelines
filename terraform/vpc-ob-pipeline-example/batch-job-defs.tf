@@ -3,6 +3,7 @@ locals {
   vcpusForCPUAggressiveTasks = 8
   vcpusForCPUNormalTasks     = 4
   vcpusForCPULowTasks        = 2
+  docker_registry_prefix = "${var.aws_account_id}.dkr.ecr.us-east-1.amazonaws.com/outlier-bio/" # outlierbio
 }
 
 resource "aws_batch_job_definition" "sra" {
@@ -10,7 +11,7 @@ resource "aws_batch_job_definition" "sra" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/sra",
+  "image": "${local.docker_registry_prefix}sra",
   "vcpus": ${local.vcpusForCPUAggressiveTasks},
   "memory": 50000,
   "command": [ "Ref::srr_id", "Ref::layout", "Ref::outpath" ],
@@ -32,7 +33,7 @@ resource "aws_batch_job_definition" "star" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/star",
+  "image": "${local.docker_registry_prefix}star",
   "vcpus": ${local.vcpusForCPUAggressiveTasks},
   "memory": 50000,
   "command": [ "Ref::fq1", "Ref::fq2", "Ref::genome_dir", "Ref::prefix", "Ref::threads" ],
@@ -68,10 +69,10 @@ resource "aws_batch_job_definition" "skewer" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/skewer",
+  "image": "${local.docker_registry_prefix}skewer",
   "vcpus": ${local.vcpusForCPUAggressiveTasks},
   "memory": 8000,
-  "command": [ "-z", "-t", "20", "-o", "Ref::outdir", "Ref::fq1", "Ref::fq2" ],
+  "command": [ "-z", "-t", "${local.vcpusForCPUAggressiveTasks}", "-o", "Ref::outdir", "Ref::fq1", "Ref::fq2" ],
   "environment": [{
     "name": "SCRATCH_DIR", "value": "/scratch"
   }],  
@@ -93,7 +94,7 @@ resource "aws_batch_job_definition" "bam2fastq" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/picard",
+  "image": "${local.docker_registry_prefix}picard",
   "vcpus": ${local.vcpusForCPUNormalTasks},
   "memory": 8000,
   "command": [ "sh", "/bam2fastq.sh", "Ref::input", "Ref::fq1", "Ref::fq2" ],
@@ -118,7 +119,7 @@ resource "aws_batch_job_definition" "multiqc" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/multiqc",
+  "image": "${local.docker_registry_prefix}multiqc",
   "vcpus": ${local.vcpusForCPULowTasks},
   "memory": 8000,
   "command": [ "Ref::analysis_dir" ],
@@ -144,10 +145,10 @@ resource "aws_batch_job_definition" "kallisto" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/kallisto",
+  "image": "${local.docker_registry_prefix}kallisto",
   "vcpus": ${local.vcpusForCPUAggressiveTasks},
   "memory": 50000,
-  "command": [ "quant", "-i", "Ref::index", "-o", "Ref::output", "-t", "20", "-b", "100", "Ref::reads1", "Ref::reads2" ],
+  "command": [ "quant", "-i", "Ref::index", "-o", "Ref::output", "-t", "${local.vcpusForCPUAggressiveTasks}", "-b", "100", "Ref::reads1", "Ref::reads2" ],
   "volumes": [{
     "host": { "sourcePath": "/mnt/scratch" },
     "name": "scratch"
@@ -180,7 +181,7 @@ resource "aws_batch_job_definition" "fastqc" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/fastqc",
+  "image": "${local.docker_registry_prefix}fastqc",
   "vcpus": ${local.vcpusForCPULowTasks},
   "memory": 8000,
   "command": [ "Ref::fq1", "Ref::fq2", "Ref::out_dir", "Ref::name" ],
@@ -206,7 +207,7 @@ resource "aws_batch_job_definition" "disambiguate" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/disambiguate",
+  "image": "${local.docker_registry_prefix}disambiguate",
   "vcpus": ${local.vcpusForCPUAggressiveTasks},
   "memory": 16000,
   "command": [ "-s", "Ref::sample", "-o", "Ref::outdir", "-a", "Ref::aligner", "Ref::A", "Ref::B" ],
@@ -222,6 +223,32 @@ resource "aws_batch_job_definition" "disambiguate" {
     "containerPath": "/scratch",
     "readOnly": false,
     "sourceVolume": "scratch"
+  }]
+}
+EOF
+}
+
+resource "aws_batch_job_definition" "samtools-sort-by-coord" {
+  name = "samtools-sort-by-coord"
+  type = "container"
+  container_properties = <<EOF
+{
+  "image": "outlierbio/samtools",
+  "vcpus": ${local.vcpusForCPUAggressiveTasks},
+  "memory": 50000,
+  "command": [ "samtools", "sort", "-m", "8G", "-o", "Ref::output", "-T", "Ref::tmp_prefix", "-@", "4", "Ref::input" ],
+  "environment": [{
+    "name": "SCRATCH_DIR",
+    "value": "/scratch"
+  }],
+  "mountPoints": [{
+    "containerPath": "/scratch",
+    "readOnly": false,
+    "sourceVolume": "scratch"
+  }],
+  "volumes": [{
+    "name": "scratch",
+    "host": { "sourcePath": "/mnt/scratch" }
   }]
 }
 EOF

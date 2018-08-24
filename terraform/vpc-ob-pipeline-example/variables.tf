@@ -1,3 +1,7 @@
+variable "aws_account_id" {
+  default = "469810709223"
+}
+
 # VPC general settings
 variable "aws_region" {
   default     = "us-east-1"
@@ -36,6 +40,24 @@ variable "route53_zone_external" {
 variable "route53_zone_internal" {
   default     = "bkz.private."
   description = "Private zone"
+}
+
+# This is the convention we use in ECS resources to know what belongs to each other
+variable "batch_resources_name" {
+  default = "outlier-bio-batch-ecs"
+}
+
+# The prefix for names of ECS resources that will be created
+variable "batch_ecs_instance_profile" {
+  default = "outlier-bio"
+}
+
+variable "batch_compute_env_name" {
+  default = "test-env"
+}
+
+variable "batch_queue_name" {
+  default = "test-queue"
 }
 
 # VPC additional options
