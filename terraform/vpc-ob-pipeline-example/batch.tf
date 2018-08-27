@@ -1,18 +1,6 @@
-locals {
-
-  # This is the convention we use to know what belongs to each other
-  batch_resources_name = "outlier-bio-batch-ecs"
-  
-  # The prefix for names of ECS resources that will be created
-  batch_ecs_instance_profile = "outlier-bio"
-
-  batch_compute_env_name = "test-env"
-  batch_queue_name = "test-queue"
-}
-
 module "ecs-instance-profile" "batch-ecs-instance-profile" {
   source = "../modules/ecs-instance-profile"
-  name   = "${local.batch_ecs_instance_profile}"
+  name   = "${var.batch_ecs_instance_profile}"
 }
 
 resource "aws_iam_policy" "iam_policy_batch_ecr_role_grant_s3_access" {
@@ -22,31 +10,40 @@ resource "aws_iam_policy" "iam_policy_batch_ecr_role_grant_s3_access" {
 {
   "Version": "2012-10-17",
   "Statement": [{
+    "Sid": "S3ListAllMyBucketsAccessForSourceAndTargetBucket",
+    "Effect": "Allow",
+    "Action": [ "s3:ListAllMyBuckets" ],
+    "Resource": "*"
+  }, {
     "Sid": "S3ReadAccessForSourceBucket",
     "Effect": "Allow",
-    "Action": [
-       "s3:GetBucketLocation",
-       "s3:ListAllMyBuckets",
-       "s3:GetObject",
-       "s3:GetObjectAcl",
-       "s3:PutObject",
-       "s3:PutObjectAcl",
-       "s3:DeleteObject"
-    ],
-    "Resource": [ "${data.aws_s3_bucket.source_bucket.arn}" ]
+    "Action": [ "s3:*" ],
+    "Resource": [
+      "${data.aws_s3_bucket.source_bucket.arn}",
+      "${data.aws_s3_bucket.source_bucket.arn}/*"
+    ]
   }, {
     "Sid": "S3RWAccessForTargetBucket",
     "Effect": "Allow",
+    "Action": [ "s3:*" ],
+    "Resource": [
+      "${aws_s3_bucket.target_bucket.arn}",
+      "${aws_s3_bucket.target_bucket.arn}/*"
+    ]
+  }, {
+    "Sid": "ECRReadOnlyAccessForImagesPull",
+    "Effect": "Allow",
     "Action": [
-       "s3:GetBucketLocation",
-       "s3:ListAllMyBuckets",
-       "s3:GetObject",
-       "s3:GetObjectAcl",
-       "s3:PutObject",
-       "s3:PutObjectAcl",
-       "s3:DeleteObject"
-    ],
-    "Resource": [ "${aws_s3_bucket.target_bucket.arn}" ]
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:DescribeImages",
+      "ecr:BatchGetImage"
+     ],
+    "Resource": [ "*" ]
   }]
 }
 EOF
@@ -59,13 +56,13 @@ resource "aws_iam_policy_attachment" "iam_policy_batch_ecr_role_grant_s3_access_
 }
 
 resource "aws_batch_compute_environment" "test_environment_1" {
-  compute_environment_name = "${local.batch_compute_env_name}"
-  service_role = "arn:aws:iam::469810709223:role/service-role/AWSBatchServiceRole"
+  compute_environment_name = "${var.batch_compute_env_name}"
+  service_role = "arn:aws:iam::${var.aws_account_id}:role/service-role/AWSBatchServiceRole"
   type = "UNMANAGED"
 }
 
 resource "aws_batch_job_queue" "test_queue_1" {
-  name = "${local.batch_queue_name}"
+  name = "${var.batch_queue_name}"
   state = "ENABLED"
   priority = 1
   compute_environments = [ "${aws_batch_compute_environment.test_environment_1.arn}" ]
@@ -82,22 +79,22 @@ data "template_file" "user_data_batch_1" {
 module "autoscaling" "ecs_instances" {
   source = "../modules/aws-autoscaling"
 
-  name = "${local.batch_resources_name}"
+  name = "${var.batch_resources_name}"
 
   # Launch configuration
-  lc_name = "${local.batch_resources_name}"
+  lc_name = "${var.batch_resources_name}"
   associate_public_ip_address = true
   spot_price                  = 1.0
 
-  image_id             = "ami-644a431b"
-  instance_type        = "x1e.2xlarge"
+  image_id             = "ami-00129b193dc81bc31"
+  instance_type        = "m4.10xlarge" # "x1e.2xlarge", "m5.12xlarge", "c5.18xlarge"
   security_groups      = [ "${module.sg.default}", "${module.sg.public_ssh}" ]
   iam_instance_profile = "${module.ecs-instance-profile.instance_profile_id}"
   user_data            = "${data.template_file.user_data_batch_1.rendered}"
   key_name             = "${var.ssh_key_name}"
 
   # Auto scaling group
-  asg_name                  = "${local.batch_resources_name}"
+  asg_name                  = "${var.batch_resources_name}"
   vpc_zone_identifier       = "${module.vpc.public_subnets}"
   health_check_type         = "EC2"
   min_size                  = 0
@@ -109,8 +106,7 @@ module "autoscaling" "ecs_instances" {
     key                 = "Environment"
     value               = "main"
     propagate_at_launch = true
-  },
-  {
+  }, {
     key                 = "Cluster"
     value               = "outlier-bio"
     propagate_at_launch = true

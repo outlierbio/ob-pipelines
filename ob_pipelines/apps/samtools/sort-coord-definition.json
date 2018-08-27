@@ -6,6 +6,7 @@
         "vcpus": 8,
         "memory": 50000,
         "command": [
+            "samtools",
             "sort",
             "-m", "8G",
             "-o", "Ref::output",
