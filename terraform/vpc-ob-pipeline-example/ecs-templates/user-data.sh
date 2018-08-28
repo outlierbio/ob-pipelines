@@ -18,18 +18,18 @@ chmod 777 /mnt/scratch /mnt/reference
 
 echo "Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin" >> /etc/sudoers
 
-yum update
-yum install -y python36 python36-virtualenv python36-pip htop vim python-setuptools
-easy_install pip
-pip install awscli
+sudo yum update
+sudo yum install -y python36 python36-virtualenv python36-pip htop vim python-setuptools
+sudo easy_install pip
+sudo pip install awscli
 
 # Start Docker back
-service docker start
+sudo service docker start
 
 sleep 3
 
 # Login to the ECR
-$(aws ecr get-login --no-include-email --region us-east-1) || :
+sudo $(sudo aws ecr get-login --no-include-email --region us-east-1) || :
 
 ##############################################################
 
