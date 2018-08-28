@@ -263,6 +263,9 @@ resource "aws_batch_job_definition" "s3sync" {
         "vcpus": 1,
         "memory": 2000,
         "command": [
+            "bash",
+            "-x",
+            "/run.sh",
             "Ref::s3_bucket"
         ],
         "environment": [

@@ -1,15 +1,17 @@
 import luigi
 from luigi import LocalTarget
+from luigi.contrib.batch import BatchTask
 
 from ob_pipelines.config import cfg
 from ob_pipelines import LoggingTaskWrapper
 
 
-class S3Sync(LoggingTaskWrapper):
+class S3Sync(BatchTask, LoggingTaskWrapper):
 
     job_definition = 's3sync'
     sync_id = luigi.Parameter()
-    s3_bucket = luigi.Parameter(default=cfg['RAW_BUCKET'])
+    defS3path = cfg['RAW_BUCKET'] + '/reference'
+    s3_bucket = luigi.Parameter(default=defS3path)
 
     @property
     def job_name(self):
