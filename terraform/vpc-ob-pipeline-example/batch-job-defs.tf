@@ -253,3 +253,39 @@ resource "aws_batch_job_definition" "samtools-sort-by-coord" {
 }
 EOF
 }
+
+resource "aws_batch_job_definition" "s3sync" {
+  name = "s3sync"
+  type = "container"
+  container_properties = <<EOF
+ {
+        "image": "${local.docker_registry_prefix}s3sync",
+        "vcpus": 1,
+        "memory": 2000,
+        "command": [
+            "Ref::s3_bucket"
+        ],
+        "environment": [
+            {
+                "name": "REFERENCE_DIR",
+                "value": "/reference"
+            }
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/reference"
+                },
+                "name": "reference"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/reference",
+                "readOnly": false,
+                "sourceVolume": "reference"
+            }
+        ]
+  }
+EOF
+}
