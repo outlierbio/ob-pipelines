@@ -35,6 +35,12 @@ module "ecr-repo-outlier-bio-star" {
   num_of_last_images_to_keep = 30
 }
 
+module "ecr-repo-outlier-bio-samtools" {
+  source = "../modules/ecr-repo"
+  name = "outlier-bio/samtools"
+  num_of_last_images_to_keep = 30
+}
+
 module "ecr-repo-outlier-bio-s3sync" {
   source = "../modules/ecr-repo"
   name = "outlier-bio/s3sync"

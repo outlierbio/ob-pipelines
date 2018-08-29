@@ -233,10 +233,36 @@ resource "aws_batch_job_definition" "samtools-sort-by-coord" {
   type = "container"
   container_properties = <<EOF
 {
-  "image": "outlierbio/samtools",
+  "image": "${local.docker_registry_prefix}samtools",
   "vcpus": ${local.vcpusForCPUAggressiveTasks},
   "memory": 50000,
-  "command": [ "samtools", "sort", "-m", "8G", "-o", "Ref::output", "-T", "Ref::tmp_prefix", "-@", "4", "Ref::input" ],
+  "command": [ "bash", "-x", "/samtools-sort-coord.sh", "Ref::input", "Ref::output", "Ref::tmp_prefix"],
+  "environment": [{
+    "name": "SCRATCH_DIR",
+    "value": "/scratch"
+  }],
+  "mountPoints": [{
+    "containerPath": "/scratch",
+    "readOnly": false,
+    "sourceVolume": "scratch"
+  }],
+  "volumes": [{
+    "name": "scratch",
+    "host": { "sourcePath": "/mnt/scratch" }
+  }]
+}
+EOF
+}
+
+resource "aws_batch_job_definition" "samtools-index" {
+  name = "samtools-index"
+  type = "container"
+  container_properties = <<EOF
+{
+  "image": "${local.docker_registry_prefix}samtools",
+  "vcpus": ${local.vcpusForCPUAggressiveTasks},
+  "memory": 50000,
+  "command": [ "bash", "-x", "/samtools-index.sh", "Ref::input", "Ref::output", "Ref::tmp_prefix"],
   "environment": [{
     "name": "SCRATCH_DIR",
     "value": "/scratch"
@@ -266,7 +292,8 @@ resource "aws_batch_job_definition" "s3sync" {
             "bash",
             "-x",
             "/run.sh",
-            "Ref::s3_bucket"
+            "Ref::source",
+            "Ref::destination"
         ],
         "environment": [
             {

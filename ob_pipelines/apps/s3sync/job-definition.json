@@ -6,7 +6,8 @@
         "vcpus": 1,
         "memory": 2000,
         "command": [
-            "Ref::s3_bucket"
+            "Ref::source",
+            "Ref::destination"
         ],
         "environment": [
             {

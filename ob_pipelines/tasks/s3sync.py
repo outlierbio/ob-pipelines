@@ -7,11 +7,14 @@ from ob_pipelines import LoggingTaskWrapper
 
 
 class S3Sync(BatchTask, LoggingTaskWrapper):
-
     job_definition = 's3sync'
     sync_id = luigi.Parameter()
+
+    done = False
+
     defS3path = cfg['RAW_BUCKET'] + '/reference'
-    s3_bucket = luigi.Parameter(default=defS3path)
+    source = luigi.Parameter(default=defS3path)
+    destination = luigi.Parameter(default='')
 
     @property
     def job_name(self):
@@ -21,11 +24,12 @@ class S3Sync(BatchTask, LoggingTaskWrapper):
     def parameters(self):
         return {
             'sync_id': self.sync_id,
-            's3_bucket': self.s3_bucket
+            'source': self.source,
+            'destination': self.destination
         }
 
     def complete(self):
-        return False
+        return self.done
 
-    def output(self):
-        return LocalTarget('/reference')
+    def run(self):
+        self.done = True
