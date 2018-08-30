@@ -23,8 +23,9 @@ default:
 
   REFERENCE_SNAPSHOT: 
 
-  KEY_NAME: 
-  SECURITY_GROUP: 
+  KEY_NAME:
+  AUTOSCALING_GROUP: 'outlier-bio-batch-ecs'
+  SECURITY_GROUP:
   SUBNETS: 
     - 
     - 
