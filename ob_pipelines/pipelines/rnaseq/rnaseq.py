@@ -23,12 +23,14 @@ class RnaSeq(WrapperTask):
     expt_id = Parameter()
 
     def requires(self):
+        yield ScaleCluster(desired_capacity_target=1, scaling_action=ScalingAction.UP)
         yield S3Sync(sync_id=self.expt_id, source=cfg['RAW_BUCKET'] + '/reference', destination='/reference')
         for sample_id in get_samples_by_experiment_id(self.expt_id):
             yield FastQC(sample_id=sample_id)
             yield Star(sample_id=sample_id)
             yield IndexBam(sample_id=sample_id)
             yield Kallisto(sample_id=sample_id)
+            yield ScaleCluster(desired_capacity_target=0, scaling_action=ScalingAction.DOWN)
         #     yield GeneCoverage(sample_id=sample_id)
         #     yield ReadDistribution(sample_id=sample_id)
         #     yield KallistoSpliced(sample_id=sample_id)
