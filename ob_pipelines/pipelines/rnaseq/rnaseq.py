@@ -14,6 +14,7 @@ from ob_pipelines.tasks.merge_kallisto import MergeKallisto
 from ob_pipelines.tasks.read_distribution import ReadDistribution
 from ob_pipelines.config import cfg
 from ob_pipelines.tasks.s3sync import S3Sync
+from ob_pipelines.tasks.scale_cluster import ScaleCluster, ScalingAction
 
 logger = logging.getLogger('luigi-interface')
 

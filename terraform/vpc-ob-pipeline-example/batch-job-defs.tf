@@ -3,7 +3,7 @@ locals {
   vcpusForCPUAggressiveTasks = 8
   vcpusForCPUNormalTasks     = 4
   vcpusForCPULowTasks        = 2
-  docker_registry_prefix = "${var.aws_account_id}.dkr.ecr.us-east-1.amazonaws.com/outlier-bio/" # outlierbio
+  docker_registry_prefix = "${var.aws_account_id}.dkr.ecr.us-east-1.amazonaws.com/outlier-bio/" # outlierbio/
 }
 
 resource "aws_batch_job_definition" "sra" {
