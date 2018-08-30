@@ -31,6 +31,7 @@ docker build --no-cache -t outlierbio/sra $REPO_DIR/ob_pipelines/apps/sra --buil
 docker build --no-cache -t outlierbio/star $REPO_DIR/ob_pipelines/apps/star --build-arg STAR_VERSION=${STAR_VERSION}
 docker build --no-cache -t outlierbio/subread $REPO_DIR/ob_pipelines/apps/subread --build-arg SUBREAD_VERSION=${SUBREAD_VERSION}
 docker build --no-cache -t outlierbio/gdc $REPO_DIR/ob_pipelines/apps/gdc --build-arg GDC_VERSION=${GDC_VERSION}
+docker build --no-cache -t outlierbio/s3sync $REPO_DIR/ob_pipelines/apps/s3sync
 
 
 docker push outlierbio/ob-pipelines
@@ -51,3 +52,4 @@ docker push outlierbio/sra
 docker push outlierbio/star
 docker push outlierbio/subread
 docker push outlierbio/gdc
+docker push outlierbio/s3sync

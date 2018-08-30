@@ -7,14 +7,15 @@ from ob_pipelines.tasks.sort_bam import SortBam
 
 class IndexBam(BatchTask, LoggingTaskWrapper, Sample):
     job_definition = 'samtools-index'
-    image = 'outlierbio/samtools'
-    command = ['index', 'Ref::input', 'Ref::output']
+    # image = 'outlierbio/samtools'
+    # command = ['index', 'Ref::input', 'Ref::output']
 
     @property
     def parameters(self):
         return {
             'input': self.input().path,
-            'output': self.output().path
+            'output': self.output().path,
+            'tmp_prefix': '/scratch/{}'.format(self.sample_id)
         }
 
     def requires(self):
