@@ -30,7 +30,7 @@ class RnaSeq(WrapperTask):
             yield Star(sample_id=sample_id)
             yield IndexBam(sample_id=sample_id)
             yield Kallisto(sample_id=sample_id)
-            yield ScaleCluster(desired_capacity_target=0, scaling_action=ScalingAction.DOWN)
+        yield ScaleCluster(desired_capacity_target=0, scaling_action=ScalingAction.DOWN)
         #     yield GeneCoverage(sample_id=sample_id)
         #     yield ReadDistribution(sample_id=sample_id)
         #     yield KallistoSpliced(sample_id=sample_id)
