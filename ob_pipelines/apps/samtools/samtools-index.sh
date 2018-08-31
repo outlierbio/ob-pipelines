@@ -7,12 +7,27 @@ TMP_PREFIX=$3
 I_FILENAME=$(basename $INPUT)
 O_FILENAME=$(basename $OUTPUT)
 TMP_DIR=$TMP_PREFIX
-mkdir -p $TMP_DIR
-aws s3 cp $INPUT $TMP_DIR/$I_FILENAME
+INPUT_LOCAL=$INPUT
 
-OUTPUT_LOCAL=$TMP_DIR/$O_FILENAME
-INPUT_LOCAL=$TMP_DIR/$I_FILENAME
+#Check if input file on S3, if yes - then copy to temporary dir
+if [[ $INPUT == s3://* ]];
+then
+    mkdir -p $TMP_DIR
+    aws s3 cp $INPUT $TMP_DIR/$I_FILENAME
+    INPUT_LOCAL=$TMP_DIR/$I_FILENAME
+fi
+
+#output to local folder if $OUTPUT path is not on S3
+OUTPUT_LOCAL=$OUTPUT
+if [[ $OUTPUT == s3://* ]];
+then
+    OUTPUT_LOCAL=$TMP_DIR/$O_FILENAME
+fi
 
 samtools index $INPUT_LOCAL $OUTPUT_LOCAL
 
-aws s3 cp $OUTPUT_LOCAL $OUTPUT
+#Copy a resulted file to S3 if it is needed
+if [[ $OUTPUT == s3://* ]];
+then
+    aws s3 cp $OUTPUT_LOCAL $OUTPUT
+fi
