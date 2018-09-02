@@ -4,10 +4,23 @@ Luigi pipelines and Dockerized apps for bioinformatics and data science
 
 Use with Python 3.* only.
 
+The pipelines are based on [Luigi](https://github.com/spotify/luigi) framework from Spotify which helps to build complex pipelines of batch jobs and simplifies dependency resolution and workflow management.
+Dockerized applications for the pipelines can use files from AWS S3 and from local file system. You can find more containers in [BioContainer](https://github.com/BioContainers/containers) repository.
+
 This repository requires [Airtable library](https://github.com/outlierbio/ob-airtable/) to be copied into python libraries.
 You can install it and other dependencies by running ```make dev_install```
 
-### Makefile
+###Abstract
+
+ob-pipelines project already contains several pipelines which are ready to use:
+ * ChipSeq
+ * RnaSeq
+ * SRADownload
+ * Xenograft
+ 
+###Project overview
+
+#### Makefile
 
 Provides commands to start/stop scheduler, install project, etc.
 * `test` _run tests_
@@ -18,7 +31,7 @@ Provides commands to start/stop scheduler, install project, etc.
 
 For more details please check each command in Makefile.
 
-### Metadata
+#### Metadata
 
 We are using [Airtable](https://airtable.com/) as main metadata storage.
 Please create your own database based on our [sample](https://airtable.com/tblyy5D1XdeMG7hok/viwOOno27qvaYhpDt)
@@ -38,7 +51,7 @@ You can add any metadata fields you'd like.
 Please note that pipeline will be looking for raw data in `<Experiment Name>/<Sample Name>`/ folder, eg `EXPT-1/SAMPLE-1/`
 
 
-### Setup
+#### Setup
 
 Create `config.yaml` based on [config template](config-template.yaml)
 
@@ -56,7 +69,7 @@ eg
 
 !Please Note! Installation via `configure_bas.sh` is deprecated, please use `ob_pipelines/cluster.py` instead
 
-### Creating own pipelines
+#### Creating own pipelines
 
 When creating your own pipelines please follow:
 
@@ -84,16 +97,49 @@ Your folder structure should look like following:
 └── ...
 ```
 
-### Tasks
+#### Tasks
+* `LoggingTaskWrapper` - basic task for the pipeline, it is used for managing of priorities and logging activities
+* `BatchTask` - basic task for the pipeline, a wrapper for Luigi's Task class and it is used to start task in AWS Batch
 
-* `BatchTask` - basic task for the pipeline, a wrapper for Luigi's Task class
-
-#### Download tasks
+##### Download tasks
 * `SRADownload` - downloads SRA files from NCBI (https://www.ncbi.nlm.nih.gov/)
 * `GDCDownload` - downloads BAM and FASTQ files from https://gdc.cancer.gov. A client supports validation of downloaded data with using MD5 from annotations for files from the site. Annotations are optional and the tool does not guarantee that all files will be verified
+* `S3Sync` - synchronizes a storage with AWS S3, it can download from S3 and upload to S3.
 
-#### Testing 
+##### Scaling tasks
+
+* `ScaleCluster` - allows to do up scale and down scale of AWS cluster via "desired count" parameter in AutoScaling group.  Scaling tasks work only when configuration parameter `AUTOSCALING_GROUP` was specified in `config.yaml`. You don't need to specify the full name of the group, the tasks find a group with name which starts with the same string. Scaling up task has the highest priority (100), Scaling down task has the lowest priority (0). All LoggingTaskWrapper has priority 50 by default. Luigi uses acyclic direction graph structure for tasks and priorities of its work only for tasks on the same level (the same distance from a root task).
+
+### Testing 
 If you have issues running test please try following `python3 -m pytest -sv test/local/`
+
+###Getting started
+
+1. `make dev_install`
+2. Configure AWS CLI - `aws configure`
+3. Create a base in Airtable with Experiment, Samples, Tasks. More information is in **Metadata** paragraph
+4. Create `config.yaml`, template of it is `config-template.yaml` and specify all needed configuration parameters.
+     Mandatory parameters:
+     * All `AIRTABLE_*` parameters
+     * `RAW_BUCKET` - a bucket with source data
+     * `S3_BUCKET` - a bucket with intermediate and resulted data
+     * `COMPUTE_ENV`
+     * `QUEUE_NAME`
+     * `IMAGE_ID`
+     * `INSANCE_TYPE`
+     * `SPOT_PRICE`
+     * `TARGET_CAPACITY`
+     * `AUTOSCALING_GROUP`
+5. Install [Terraform](https://www.terraform.io/downloads.html)
+6. Update TF variables in  `./terraform/vpc-ob-pipeline-example/variables.tf` file
+7. Execute:
+    ```
+   terraform plan
+   terraform apply 
+    ```
+8. Copy source files to `RAW_BUCKET` on S3, for examples: `s3://bucket/raw/SRR821356_1.fastq.gz and add a link to it in FastQ cell in airtable.
+9. Run luigi Task for a pipeline, for example:  `python3 -m luigi --module ob_pipelines.pipelines.rnaseq.rnaseq RnaSeq --local-scheduler --expt-id EXPT-1`
+    
 
 ### Contributing
 
