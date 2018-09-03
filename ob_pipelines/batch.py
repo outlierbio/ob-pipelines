@@ -43,14 +43,13 @@ Written and maintained by Jake Feala (@jfeala) for Outlier Bio (@outlierbio)
 """
 
 import json
-import os
 import logging
 import random
 import string
-from subprocess import check_output
 import time
 
 import luigi
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -75,11 +74,11 @@ class BatchClient(object):
     def __init__(self):
         self._client = boto3.client('batch')
         self._queue = self.get_active_queue()
-    
+
     def get_active_queue(self):
         """Get name of first active job queue"""
         # Get dict of active queues keyed by name
-        queues = {q['jobQueueName']:q for q in self._client.describe_job_queues()['jobQueues']
+        queues = {q['jobQueueName']: q for q in self._client.describe_job_queues()['jobQueues']
                   if q['state'] == 'ENABLED' and q['status'] == 'VALID'}
         if not queues:
             raise Exception('No job queues with state=ENABLED and status=VALID')
@@ -115,16 +114,16 @@ class BatchClient(object):
         if job_name is None:
             job_name = _random_id()
         response = self._client.submit_job(
-            jobName = job_name,
-            jobQueue = queue or self.get_active_queue(),
-            jobDefinition = job_definition,
-            parameters = parameters
+            jobName=job_name,
+            jobQueue=queue or self.get_active_queue(),
+            jobDefinition=job_definition,
+            parameters=parameters
         )
         return response['jobId']
 
     def wait_on_job(self, job_id):
         """Poll task status until STOPPED"""
-        
+
         while True:
             status = self.get_job_status(job_id)
             if status == 'SUCCEEDED':
@@ -152,7 +151,6 @@ class BatchClient(object):
 
 
 class BatchTask(luigi.Task):
-
     """
     Base class for an Amazon Batch job
 
@@ -172,5 +170,20 @@ class BatchTask(luigi.Task):
     def run(self):
         bc = BatchClient()
         job_id = bc.submit_job(self.job_definition, self.parameters,
-            job_name=self.job_name)
+                               job_name=self.job_name)
         bc.wait_on_job(job_id)
+
+
+class LoggingTaskWrapper(luigi.Task):
+
+    @property
+    def priority(self):
+        return 50
+
+    @property
+    def task_key(self):
+        return getattr(self, "__task_key", None)
+
+    @task_key.setter
+    def task_key(self, value):
+        setattr(self, "__task_key", value)

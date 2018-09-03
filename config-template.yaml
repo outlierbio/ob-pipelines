@@ -1,5 +1,12 @@
 default:
 
+  AIRTABLE_API_ENDPOINT: <your airtable database endpoint>
+  AIRTABLE_API_KEY: <your airtable api key>
+
+  AIRTABLE_EXPT_TABLE: 'Experiments'
+  AIRTABLE_SAMPLE_TABLE: 'Samples'
+  AIRTABLE_TASK_TABLE: 'Tasks'
+
   RAW_BUCKET: s3://<your raw data bucket>
   S3_BUCKET: s3://<your processed data bucket>
 
@@ -16,8 +23,9 @@ default:
 
   REFERENCE_SNAPSHOT: 
 
-  KEY_NAME: 
-  SECURITY_GROUP: 
+  KEY_NAME:
+  AUTOSCALING_GROUP: 'outlier-bio-batch-ecs'
+  SECURITY_GROUP:
   SUBNETS: 
     - 
     - 

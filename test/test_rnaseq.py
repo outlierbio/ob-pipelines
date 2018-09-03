@@ -1,8 +1,8 @@
 import boto3
 import luigi
 
+from ob_pipelines.pipelines.rnaseq.tasks.kallisto import Kallisto
 from ob_pipelines.s3 import path_to_bucket_and_key
-from ob_pipelines.pipelines.rnaseq import Kallisto
 
 TEST_SAMPLE = 'GS-1'
 

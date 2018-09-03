@@ -15,6 +15,11 @@ setup(
         'luigi',
         'PyYAML'
     ],
+    extras_require={
+        'test': [
+            'pytest'
+        ]
+    },
     entry_points='''
         [console_scripts]
         s3wrap=ob_pipelines.s3:s3wrap

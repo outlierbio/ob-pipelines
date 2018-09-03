@@ -1,0 +1,38 @@
+{
+    "jobDefinitionName": "gdc-download-manifest",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/gdc",
+        "vcpus": 2,
+        "memory": 8000,
+        "command": [
+            "sh",
+            "/dl-manifest.sh",
+            "Ref::download_id",
+            "Ref::manifest_file",
+            "Ref::outpath",
+            "Ref::token_file"
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            }
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            }
+        ]
+    }
+}

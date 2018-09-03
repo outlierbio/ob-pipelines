@@ -1,0 +1,34 @@
+{
+    "jobDefinitionName": "s3sync",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/s3sync",
+        "vcpus": 1,
+        "memory": 2000,
+        "command": [
+            "Ref::source",
+            "Ref::destination"
+        ],
+        "environment": [
+            {
+                "name": "REFERENCE_DIR",
+                "value": "/reference"
+            }
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/reference"
+                },
+                "name": "reference"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/reference",
+                "readOnly": false,
+                "sourceVolume": "reference"
+            }
+        ]
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "jobDefinitionName": "gdc-download-uuids",
+    "type": "container",
+    "containerProperties": {
+        "image": "outlierbio/gdc",
+        "vcpus": 2,
+        "memory": 8000,
+        "command": [
+            "sh",
+            "/dl-uuids.sh",
+            "Ref::download_id",
+            "Ref::outpath",
+            "Ref::uuids"
+        ],
+        "environment": [
+            {
+                "name": "SCRATCH_DIR",
+                "value": "/scratch"
+            }
+        ],
+        "volumes": [
+            {
+                "host": {
+                    "sourcePath": "/mnt/scratch"
+                },
+                "name": "scratch"
+            }
+        ],
+        "mountPoints": [
+            {
+                "containerPath": "/scratch",
+                "readOnly": false,
+                "sourceVolume": "scratch"
+            }
+        ]
+    }
+}
