@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 #!/usr/bin/env bash
 
->>>>>>> 8ad2da5ddc9fbfad9056230d696b6eada3ef039c
 SCRATCH_DIR=~/Desktop/scratch
 
 image=outlierbio/sra
