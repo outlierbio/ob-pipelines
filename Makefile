@@ -6,6 +6,7 @@ test:
 
 dev_install: ../ob-airtable  # install project as library into current python and dependency if needed
 	pip install -e .[test]
+	pip install awscli
 
 scheduler_start: scheduler_stop  # start scheduler in background
 	mkdir -p var/logs
