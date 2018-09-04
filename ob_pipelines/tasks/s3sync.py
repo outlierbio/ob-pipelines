@@ -1,5 +1,4 @@
 import luigi
-from luigi import LocalTarget
 from luigi.contrib.batch import BatchTask
 
 from ob_pipelines.config import cfg

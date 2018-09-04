@@ -7,8 +7,6 @@ from ob_pipelines.tasks.sort_bam import SortBam
 
 class IndexBam(BatchTask, LoggingTaskWrapper, Sample):
     job_definition = 'samtools-index'
-    # image = 'outlierbio/samtools'
-    # command = ['index', 'Ref::input', 'Ref::output']
 
     @property
     def parameters(self):

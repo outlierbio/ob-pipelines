@@ -1,8 +1,8 @@
 import os.path as op
-import dnli_pipelines
-from dnli_pipelines.batch import BatchClient
+import ob_pipelines
+from ob_pipelines.batch import BatchClient
 
-module_dir = op.dirname(dnli_pipelines.__file__)  # __file__ is __init__.py, have to get parent folder
+module_dir = op.dirname(ob_pipelines.__file__)  # __file__ is __init__.py, have to get parent folder
 
 bc = BatchClient()  # thin wrapper for boto3.client('batch')
 

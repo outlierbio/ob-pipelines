@@ -11,8 +11,6 @@ from ob_pipelines.tasks.sra_download import SRADownload
 class FastQC(BatchTask, Sample):
 
     job_definition = 'fastqc'
-    command = ['Ref::fq1', 'Ref::fq2', 'Ref::out_dir', 'Ref::name']
-    image = 'outlierbio/fastqc'
 
     def requires(self):
         return SRADownload(

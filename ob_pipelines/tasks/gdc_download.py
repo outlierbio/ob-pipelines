@@ -8,7 +8,7 @@ class GDCDownload(BatchTask, LoggingTaskWrapper):
 
     """Download from GDC on AWS Batch"""
 
-    download_id =  luigi.Parameter()
+    download_id = luigi.Parameter()
     manifest = luigi.Parameter()
     outpath = luigi.Parameter()
     token = luigi.Parameter()

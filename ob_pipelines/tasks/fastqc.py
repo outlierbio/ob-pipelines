@@ -10,8 +10,6 @@ from ob_pipelines.tasks.sample_fastq import SampleFastQ
 
 class FastQC(BatchTask, LoggingTaskWrapper, Sample):
     job_definition = 'fastqc'
-    command = ['Ref::fq1', 'Ref::fq2', 'Ref::out_dir', 'Ref::name']
-    image = 'outlierbio/fastqc'
 
     def requires(self):
         return SampleFastQ(sample_id=self.sample_id)

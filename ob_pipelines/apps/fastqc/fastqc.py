@@ -49,7 +49,6 @@ def fastqc(fq1, fq2, out_dir, name):
         name + '_2_fastqc.zip'
     ]
 
-
     for fname in out_files:
         # Upload temp out directory to S3 with prefix
         if out_dir.startswith('s3://'):
