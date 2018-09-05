@@ -1,4 +1,5 @@
 import os.path as op
+
 import ob_pipelines
 from ob_pipelines.batch import BatchClient
 
@@ -6,9 +7,7 @@ module_dir = op.dirname(ob_pipelines.__file__)  # __file__ is __init__.py, have 
 
 bc = BatchClient()  # thin wrapper for boto3.client('batch')
 
-# Register job definition if needed
-job_def = op.join(module_dir, 'apps', 'multiqc', 'job-definition.json')
-bc.register_job_definition(job_def)
+# assuming job definition is already registered
 
 parameters = {
     'analysis_dir': 's3://com-dnli-ngs/test/1e4/'
