@@ -1,5 +1,6 @@
 variable "aws_account_id" {
-  default = "469810709223"
+  default = ""
+  description = "12-digit AWS account number"
 }
 
 # VPC general settings
@@ -32,14 +33,9 @@ variable "nat_gateway" {
   default = true
 }
 
-variable "route53_zone_external" {
-  default     = "bekitzur.com."
-  description = "Public zone"
-}
-
 variable "route53_zone_internal" {
-  default     = "bkz.private."
-  description = "Private zone"
+  default     = ""
+  description = "Private zone, e.g. 'foo.private.'"
 }
 
 # This is the convention we use in ECS resources to know what belongs to each other
@@ -53,11 +49,11 @@ variable "batch_ecs_instance_profile" {
 }
 
 variable "batch_compute_env_name" {
-  default = "test-env"
+  default = "prod-env"
 }
 
 variable "batch_queue_name" {
-  default = "test-queue"
+  default = "prod-queue"
 }
 
 # VPC additional options
@@ -75,7 +71,7 @@ variable "dns_hostnames" {
 }
 
 variable "ssh_key_name" {
-  default = "bekitzur"
+  default = ""
 }
 
 variable "tags" {

@@ -126,7 +126,7 @@ If you have issues running test please try following `python3 -m pytest -sv test
      * `COMPUTE_ENV`
      * `QUEUE_NAME`
      * `IMAGE_ID`
-     * `INSANCE_TYPE`
+     * `INSTANCE_TYPE`
      * `SPOT_PRICE`
      * `TARGET_CAPACITY`
      * `AUTOSCALING_GROUP`

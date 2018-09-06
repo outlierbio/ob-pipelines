@@ -13,24 +13,5 @@ default:
   COMPUTE_ENV: 'test-env'
   QUEUE_NAME: 'test-queue'
 
-  IMAGE_ID: 'ami-9eb4b1e5'
-  INSTANCE_TYPE: 'c4.8xlarge'
-  SPOT_PRICE: '0.6'
-  TARGET_CAPACITY: 3
-
-  BATCH_SERVICE_ROLE: 
-  SPOT_FLEET_ROLE: 
-
-  REFERENCE_SNAPSHOT: 
-
-  KEY_NAME:
   AUTOSCALING_GROUP: 'outlier-bio-batch-ecs'
-  SECURITY_GROUP:
-  SUBNETS: 
-    - 
-    - 
-    - 
-    - 
 
-  STARTUP_CMDS:
-    - yum install nano
