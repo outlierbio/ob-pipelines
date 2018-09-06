@@ -9,13 +9,11 @@ Don't forget to shut it down:
 
     $ ob-cluster shutdown
 """
-import os.path as op
 from ob_pipelines.batch import BatchClient
 
 bc = BatchClient()  # thin wrapper for boto3.client('batch')
 
-# Register job definition if needed. Assumes local directory
-bc.register_job_definition('./sra-job-definition.json')
+# assuming job definition is already registered
 
 parameters = {
     'srr_id': 'SRR2135322',

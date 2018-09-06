@@ -57,11 +57,11 @@ Create `config.yaml` based on [config template](config-template.yaml)
 
 * Install pre required dependencies using `make dev_install`
 * Run [build.sh](scripts/build.sh) when you want to build new docker images and update docker registry
-* Run [config.py](ob_pipelines/config.py) to configure AWS CLI
-* Run [cluster.py](ob_pipelines/cluster.py) to spin up 1 EC2 instance in ECS
-* Run [register_job_defs.py](scripts/register_job_defs.py) to register AWS Batch job definitions
+* Run `aws configure` to configure AWS CLI
+* Follow [readme.md](terraform/README.md) to provision and configure environment
 
 You can now run sample pipelines, eg [rnaseq.py](ob_pipelines/pipelines/rnaseq/rnaseq.py) or [xenograft.py](ob_pipelines/pipelines/xenograft/xenograft.py), or create your own. Please refer to [Creating own pipelines](#creating-own-pipelines)  
+
 To start pipeline run
 `luigi --module <namespace> <entrypoint> --expt-id="<experiment ID>"`
 eg

@@ -7,9 +7,7 @@ module_dir = op.dirname(ob_pipelines.__file__)  # __file__ is __init__.py, have 
 
 bc = BatchClient()  # thin wrapper for boto3.client('batch')
 
-# Register job definition if needed
-job_def = op.join(module_dir, 'apps', 'picard', 'bam2fastq-job-definition.json')
-bc.register_job_definition(job_def)
+# assuming job definition is already registered
 
 parameters = {
     'input': 's3://c4t-data/GE-2/GS-31/disambiguate/GS-31.disambiguatedSpeciesA.bam',

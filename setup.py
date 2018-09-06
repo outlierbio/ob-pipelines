@@ -13,7 +13,9 @@ setup(
         'boto3',
         'click',
         'luigi',
-        'PyYAML'
+        'PyYAML',
+        'pandas',
+        'pysam'
     ],
     extras_require={
         'test': [
