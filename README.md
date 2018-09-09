@@ -97,6 +97,23 @@ Your folder structure should look like following:
 └── ...
 ```
 
+The you need to add a job definition to `./terraform/vpc-ob-pipeline/batch-job-defs.tf` file. A structure of a resource for the job definition:
+```
+resource "aws_batch_job_definition" "NAME_OF_JOB" {
+  name = "NAME_OF_JOB"
+  type = "container"
+  container_properties = <<EOF
+    JOB_BODY
+EOF
+}
+```
+Please pay attention the you will need to specify in the job body a variable or path to image. Examples you can find in already defined jobs.
+Then you need to apply new job definitions via terraform:
+```
+terraform plan
+terraform apply
+```
+
 #### Tasks
 * `LoggingTaskWrapper` - basic task for the pipeline, it is used for managing of priorities and logging activities
 * `BatchTask` - basic task for the pipeline, a wrapper for Luigi's Task class and it is used to start task in AWS Batch
@@ -121,25 +138,67 @@ If you have issues running test please try following `python3 -m pytest -sv test
 4. Create `config.yaml`, template of it is `config-template.yaml` and specify all needed configuration parameters.
      Mandatory parameters:
      * All `AIRTABLE_*` parameters
-     * `RAW_BUCKET` - a bucket with source data
-     * `S3_BUCKET` - a bucket with intermediate and resulted data
-     * `COMPUTE_ENV`
-     * `QUEUE_NAME`
+     * `SOURCE_BUCKET` - a bucket with source data, for example `obp-source`
+     * `TARGET_BUCKET` - a bucket with intermediate and resulted data, for example `obp-target`
+     * `COMPUTE_ENV` - name of environment, for example: `obp-prod-env` or `obp-test-env`
+     * `QUEUE_NAME` - name of a queue for batch tasks, for example: `prod-queue`
      * `IMAGE_ID`
      * `INSTANCE_TYPE`
      * `SPOT_PRICE`
      * `TARGET_CAPACITY`
      * `AUTOSCALING_GROUP`
 5. Install [Terraform](https://www.terraform.io/downloads.html)
-6. Update TF variables in  `./terraform/vpc-ob-pipeline-example/variables.tf` file
-7. Execute:
+6. Create `./terraform/vpc-ob-pipeline/project_variables.tf` file from `project_variables.tf.example` and set variables for deployment.
+7. Run `./yaml2tfvars.py` script which will create `./terraform/vpc-ob-pipeline/variables.auto.tfvars` with common variables for the deployment procedure and the pipeline application.
+8. Execute in `./terraform/vpc-ob-pipeline`:
     ```
+   terraform init
    terraform plan
    terraform apply 
     ```
-8. Copy source files to `RAW_BUCKET` on S3, for examples: `s3://bucket/raw/SRR821356_1.fastq.gz and add a link to it in FastQ cell in airtable.
-9. Run luigi Task for a pipeline, for example:  `python3 -m luigi --module ob_pipelines.pipelines.rnaseq.rnaseq RnaSeq --local-scheduler --expt-id EXPT-1`
+9. Copy source files to `SOURCE_BUCKET` on S3, for examples: `s3://obp-source/raw/SRR821356_1.fastq.gz and add a link to it in FastQ cell in airtable.
+10. Run luigi Task for a pipeline, for example:  `python3 -m luigi --module ob_pipelines.pipelines.rnaseq.rnaseq RnaSeq --local-scheduler --expt-id EXPT-1`
+
+#### Using existed S3 buckets
+1. Define names of the buckets in `config.yaml` as usual.
+2. Open `/terraform/vpc-ob-pipeline/s3.tf` file and remove resource definition for that bucket and add the following data definition:
+    * Source bucket
+        ```
+        data "aws_s3_bucket" "source_bucket" {
+          bucket = "${local.source_bucket}"
+        }
+        ```
+    * Target bucket
+        ```
+        data "aws_s3_bucket" "target_bucket" {
+          bucket = "${local.target_bucket}"
+        }
+        ```
+3. Update security policy in `/terraform/vpc-ob-pipeline/s3.tf`
+    * Source bucket
     
+        Find `S3ReadAccessForSourceBucket` and replace in `Resource` section
+        ```
+        "${aws_s3_bucket.source_bucket.arn}",
+        "${aws_s3_bucket.source_bucket.arn}/*"
+        ```
+        on
+        ```
+        "${data.aws_s3_bucket.source_bucket.arn}",
+        "${data.aws_s3_bucket.source_bucket.arn}/*"
+        ```
+    * Target bucket
+    
+        Find `S3RWAccessForTargetBucket` and replace in `Resource` section
+        ```
+        "${aws_s3_bucket.target_bucket.arn}",
+        "${aws_s3_bucket.target_bucket.arn}/*"
+        ```
+        on
+        ```
+        "${data.aws_s3_bucket.target_bucket.arn}",
+        "${data.aws_s3_bucket.target_bucket.arn}/*"
+        ```
 
 ### Contributing
 

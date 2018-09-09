@@ -10,5 +10,5 @@ class TestConfigIntegrity:
         assert cfg['AIRTABLE_TASK_TABLE'] is not None
 
     def check_s3_cfg(self):
-        assert cfg['RAW_BUCKET'] is not None
-        assert cfg['S3_BUCKET'] is not None
+        assert cfg['SOURCE_BUCKET'] is not None
+        assert cfg['TARGET_BUCKET'] is not None

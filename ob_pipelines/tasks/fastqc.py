@@ -3,7 +3,7 @@ from os import path as op
 from luigi.contrib.s3 import S3Target
 
 from ob_pipelines.batch import BatchTask, LoggingTaskWrapper
-from ob_pipelines.config import cfg
+from ob_pipelines.config import cfg, settings
 from ob_pipelines.entities.sample import Sample
 from ob_pipelines.tasks.sample_fastq import SampleFastQ
 
@@ -22,7 +22,7 @@ class FastQC(BatchTask, LoggingTaskWrapper, Sample):
             'zip_2': self.sample_id + '_2_fastqc.zip'
         }
         return {k: S3Target(
-            '{bucket}/{sample}/fastqc/{folder_name}'.format(bucket=cfg['S3_BUCKET'], sample=self.sample_folder,
+            '{bucket}/{sample}/fastqc/{folder_name}'.format(bucket=settings.get_target_bucket(), sample=self.sample_folder,
                                                             folder_name=fname))
                 for k, fname in s3_paths.items()}
 

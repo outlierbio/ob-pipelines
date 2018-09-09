@@ -12,7 +12,7 @@ from ob_pipelines.tasks.index_bam import IndexBam
 from ob_pipelines.tasks.merge_ercc import MergeERCC
 from ob_pipelines.tasks.merge_kallisto import MergeKallisto
 from ob_pipelines.tasks.read_distribution import ReadDistribution
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.tasks.s3sync import S3Sync
 from ob_pipelines.tasks.scale_cluster import ScaleCluster, ScalingAction
 
@@ -24,7 +24,8 @@ class RnaSeq(WrapperTask):
 
     def requires(self):
         yield ScaleCluster(desired_capacity_target=1, scaling_action=ScalingAction.UP)
-        yield S3Sync(sync_id=self.expt_id, source=cfg['RAW_BUCKET'] + '/reference', destination='/reference', priority=90)
+        yield S3Sync(sync_id=self.expt_id, source=settings.get_source_bucket() + '/reference', destination='/reference',
+                     task_priority=90)
         for sample_id in get_samples_by_experiment_id(self.expt_id):
             yield FastQC(sample_id=sample_id)
             yield Star(sample_id=sample_id)

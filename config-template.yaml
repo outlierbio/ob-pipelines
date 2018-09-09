@@ -7,11 +7,12 @@ default:
   AIRTABLE_SAMPLE_TABLE: 'Samples'
   AIRTABLE_TASK_TABLE: 'Tasks'
 
-  RAW_BUCKET: s3://<your raw data bucket>
-  S3_BUCKET: s3://<your processed data bucket>
+  SOURCE_BUCKET: <your raw data bucket>
+  TARGET_BUCKET: <your processed data bucket>
 
   COMPUTE_ENV: 'test-env'
   QUEUE_NAME: 'test-queue'
 
+  KEY_NAME: <name of the key>
   AUTOSCALING_GROUP: 'outlier-bio-batch-ecs'
 

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from luigi import Parameter
 
-from ob_pipelines.config import cfg
+from ob_pipelines.config import cfg, settings
 
 
 class Sample(object):
@@ -33,7 +33,7 @@ class Sample(object):
     @property
     def sample_folder(self) -> str:
         return '{expt}/{sample}'.format(
-            bucket=cfg['S3_BUCKET'],
+            bucket=settings.get_target_bucket(),
             expt=self.experiment.name,
             sample=self.sample_id)
 

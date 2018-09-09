@@ -28,6 +28,10 @@ class ConfigManager:
     def get(self, option, default=None):
         return self.config.get(option, default)
 
+    def get_source_bucket(self):
+        return "s3://%s" % self.get("SOURCE_BUCKET")
 
+    def get_target_bucket(self):
+        return "s3://%s" % self.get("TARGET_BUCKET")
 
 settings = ConfigManager(cfg)

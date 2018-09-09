@@ -176,9 +176,11 @@ class BatchTask(luigi.Task):
 
 class LoggingTaskWrapper(luigi.Task):
 
+    task_priority = luigi.Parameter(default=50)
+
     @property
     def priority(self):
-        return 50
+        return self.task_priority
 
     @property
     def task_key(self):
