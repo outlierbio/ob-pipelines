@@ -287,7 +287,7 @@ resource "aws_batch_job_definition" "s3sync" {
  {
         "image": "${local.docker_registry_prefix}s3sync",
         "vcpus": 1,
-        "memory": 2000,
+        "memory": 4000,
         "command": [
             "bash",
             "-x",

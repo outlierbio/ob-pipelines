@@ -1,7 +1,7 @@
 from luigi.contrib.s3 import S3Target
 
 from ob_pipelines.batch import BatchTask, LoggingTaskWrapper
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.entities.sample import Sample
 from ob_pipelines.tasks.index_bam import IndexBam
 from ob_pipelines.tasks.sort_bam import SortBam
@@ -22,4 +22,4 @@ class FilterSpliced(BatchTask, LoggingTaskWrapper, Sample):
 
     def output(self):
         return S3Target('{}/{}/filtered/{}.spliced_reads.bam'.format(
-            cfg['S3_BUCKET'], self.sample_folder, self.sample_id))
+            settings.get_target_bucket(), self.sample_folder, self.sample_id))

@@ -3,7 +3,7 @@ import os.path as op
 import luigi
 from luigi.contrib.s3 import S3Target
 
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.batch import BatchTask
 from ob_pipelines.sample import Sample
 from ob_pipelines.apps.sra.task import SRADownload
@@ -28,7 +28,7 @@ class FastQC(BatchTask, Sample):
             'html_2': self.sample_id + '_2_fastqc.html',
             'zip_2': self.sample_id + '_2_fastqc.zip'
         }
-        return {k: S3Target('{}/{}/fastqc/{}'.format(cfg['S3_BUCKET'],
+        return {k: S3Target('{}/{}/fastqc/{}'.format(settings.get_target_bucket(),
                             self.sample_folder, fname))
                 for k, fname in s3_paths.items()}
 

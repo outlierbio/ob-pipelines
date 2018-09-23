@@ -2,7 +2,7 @@ from luigi.contrib.s3 import S3Target
 
 from ob_pipelines.apps.rseqc import GENE_COVERAGE_OUTPUTS
 from ob_pipelines.batch import BatchTask, LoggingTaskWrapper
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.entities.sample import Sample
 from ob_pipelines.tasks.index_bam import IndexBam
 from ob_pipelines.tasks.sort_bam import SortBam
@@ -13,7 +13,7 @@ class GeneCoverage(BatchTask, LoggingTaskWrapper, Sample):
 
     def prefix(self):
         return '{}/{}/rseqc/{}'.format(
-            cfg['S3_BUCKET'], self.sample_folder, self.sample_id)
+            settings.get_target_bucket(), self.sample_folder, self.sample_id)
 
     @property
     def parameters(self):

@@ -3,7 +3,7 @@ from luigi.contrib.s3 import S3Target
 
 from ob_pipelines.apps.star import STAR_OUTPUTS
 from ob_pipelines.batch import BatchTask, LoggingTaskWrapper
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.entities.sample import Sample
 from ob_pipelines.pipelines.rnaseq.index import get_index
 from ob_pipelines.tasks.sample_fastq import SampleFastQ
@@ -26,7 +26,7 @@ class Star(BatchTask, LoggingTaskWrapper, Sample):
 
     def prefix(self):
         return '{}/{}/star/{}'.format(
-            cfg['S3_BUCKET'], self.sample_folder, self.sample_id + '.')
+            settings.get_target_bucket(), self.sample_folder, self.sample_id + '.')
 
     def requires(self):
         return SampleFastQ(sample_id=self.sample_id)

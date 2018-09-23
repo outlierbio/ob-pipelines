@@ -99,3 +99,5 @@ ENV/
 .pytest_cache/
 config.yaml
 *.ngc
+project_variables.tf
+variables.auto.tfvars

@@ -1,6 +1,6 @@
 from luigi.contrib.s3 import S3Target
 
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.pipelines.rnaseq.tasks.bam_to_fastq import BamToFastQ
 from ob_pipelines.pipelines.rnaseq.tasks.kallisto import Kallisto
 
@@ -16,5 +16,5 @@ class KallistoSpliced(Kallisto):
             'h5': 'abundance.h5',
             'run_info': 'run_info.json'
         }
-        return {k: S3Target('{}/{}/filtered/{}'.format(cfg['S3_BUCKET'], self.sample_folder, fname))
+        return {k: S3Target('{}/{}/filtered/{}'.format(settings.get_target_bucket(), self.sample_folder, fname))
                 for k, fname in output_files.items()}

@@ -19,8 +19,8 @@ resource "aws_iam_policy" "iam_policy_batch_ecr_role_grant_s3_access" {
     "Effect": "Allow",
     "Action": [ "s3:*" ],
     "Resource": [
-      "${data.aws_s3_bucket.source_bucket.arn}",
-      "${data.aws_s3_bucket.source_bucket.arn}/*"
+      "${aws_s3_bucket.source_bucket.arn}",
+      "${aws_s3_bucket.source_bucket.arn}/*"
     ]
   }, {
     "Sid": "S3RWAccessForTargetBucket",

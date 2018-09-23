@@ -1,5 +1,5 @@
 variable "aws_account_id" {
-  default = ""
+  default = "000000000000"
   description = "12-digit AWS account number"
 }
 
@@ -34,7 +34,7 @@ variable "nat_gateway" {
 }
 
 variable "route53_zone_internal" {
-  default     = ""
+  default     = "yourcompany.private"
   description = "Private zone, e.g. 'foo.private.'"
 }
 
@@ -71,7 +71,7 @@ variable "dns_hostnames" {
 }
 
 variable "ssh_key_name" {
-  default = ""
+  default = "your_key_name"
 }
 
 variable "tags" {

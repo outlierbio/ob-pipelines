@@ -3,7 +3,7 @@ from luigi.contrib.s3 import S3Target
 
 from ob_pipelines import LoggingTaskWrapper
 from ob_pipelines.apps.kallisto import merge_column
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines.entities.persistence import get_samples_by_experiment_id
 from ob_pipelines.pipelines.rnaseq.tasks.kallisto import Kallisto
 from ob_pipelines.s3 import csv_to_s3
@@ -20,7 +20,7 @@ class MergeKallisto(LoggingTaskWrapper):
         }
 
     def output(self):
-        prefix = '{}/{}/'.format(cfg['S3_BUCKET'], self.expt_id)
+        prefix = '{}/{}/'.format(settings.get_target_bucket(), self.expt_id)
         out_dict = {
             'est_counts': S3Target(prefix + 'est_counts.csv'),
             'tpm': S3Target(prefix + 'tpm.csv')

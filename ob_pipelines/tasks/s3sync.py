@@ -1,7 +1,7 @@
 import luigi
 from luigi.contrib.batch import BatchTask
 
-from ob_pipelines.config import cfg
+from ob_pipelines.config import settings
 from ob_pipelines import LoggingTaskWrapper
 
 
@@ -11,7 +11,7 @@ class S3Sync(BatchTask, LoggingTaskWrapper):
 
     done = False
 
-    defS3path = cfg['RAW_BUCKET'] + '/reference'
+    defS3path = settings.get_source_bucket() + '/reference'
     source = luigi.Parameter(default=defS3path)
     destination = luigi.Parameter(default='')
 
